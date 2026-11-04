@@ -426,3 +426,19 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+## ------------------------------------------------------------
+## Python / Django
+## ------------------------------------------------------------
+.venv/
+venv/
+*.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+.pytest_cache/
+.coverage
+htmlcov/
+
+## JetBrains (PyCharm)
+.idea/
