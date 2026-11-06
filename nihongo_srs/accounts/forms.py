@@ -12,11 +12,8 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ("username", "email")
 
-    def clean_username(self):
-        username = super().clean_username()
-        if User.objects.filter(username__iexact=username).exists():
-            raise forms.ValidationError("Ta nazwa użytkownika jest już zajęta (wielkość liter nie ma znaczenia).")
-        return username
+    # Usernames differing only in letter case are already rejected by Django's
+    # BaseUserCreationForm.clean_username (case-insensitive check).
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
@@ -38,4 +35,10 @@ class ProfileForm(forms.ModelForm):
         value = self.cleaned_data["new_cards_per_day"]
         if not 1 <= value <= 100:
             raise forms.ValidationError("Podaj wartość od 1 do 100.")
+        return value
+
+    def clean_daily_goal(self):
+        value = self.cleaned_data["daily_goal"]
+        if not 1 <= value <= 500:
+            raise forms.ValidationError("Podaj wartość od 1 do 500.")
         return value

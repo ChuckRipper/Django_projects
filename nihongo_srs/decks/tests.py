@@ -41,6 +41,9 @@ class LoadDataTests(TestCase):
         good = n5.cards.get(front="いい")  # kana-only word: alternative form kept as a note
         self.assertEqual((good.reading, good.example), ("", "Inny zapis: よい"))
         self.assertEqual(n5.cards.get(front="猫").back, "kot")
+        n4 = Deck.objects.get(name="Słownictwo N4")
+        self.assertEqual(n4.cards.get(front="地震").back, "trzęsienie ziemi")
+        self.assertEqual(n4.cards.get(front="地震").meaning_en, "earthquake")
 
 
 class DeckPermissionTests(TestCase):
@@ -137,9 +140,11 @@ class FactoryAndImportTests(TestCase):
 
     def test_import_view_shows_errors(self):
         self.client.login(username="ania", password="Haslo-12345")
-        upload = SimpleUploadedFile("karty.csv", "front,back\n川,rzeka\n日本,Japonia\n".encode())
+        content = "front,back\n,pusty\n川,rzeka\n日本,Japonia\n"  # errors in CSV lines 2 and 4
+        upload = SimpleUploadedFile("karty.csv", content.encode())
         response = self.client.post(reverse("card_import", args=[self.deck.pk]), {"file": upload})
-        self.assertContains(response, "Wiersz 2")
+        self.assertContains(response, "Wiersz 2:")
+        self.assertContains(response, "Wiersz 4:")
 
     def test_cannot_import_into_system_deck(self):
         self.client.login(username="ania", password="Haslo-12345")

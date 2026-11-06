@@ -27,10 +27,26 @@ class AccountTests(TestCase):
         self.client.post(reverse("profile"), {"new_cards_per_day": 25, "daily_goal": 50})
         self.assertEqual(User.objects.get(username="kenji").profile.new_cards_per_day, 25)
 
+    def test_profile_validation(self):
+        User.objects.create_user("kenji", password="Sakura-2026!")
+        self.client.login(username="kenji", password="Sakura-2026!")
+        response = self.client.post(reverse("profile"), {"new_cards_per_day": 0, "daily_goal": 0})
+        self.assertEqual(set(response.context["form"].errors), {"new_cards_per_day", "daily_goal"})
+
     def test_pages_render(self):
         for name in ("home", "login", "register"):
             self.assertEqual(self.client.get(reverse(name)).status_code, 200)
         self.assertEqual(self.client.get("/nie-ma-takiej-strony/").status_code, 404)
+
+    def test_about_page(self):
+        response = self.client.get(reverse("about"))
+        self.assertContains(response, "SM-2")
+        self.assertContains(response, "KANJIDIC")
+
+    def test_server_error_template(self):
+        from django.template.loader import render_to_string
+
+        self.assertIn("Coś poszło nie tak", render_to_string("500.html"))
 
     def test_favicon(self):
         response = self.client.get("/favicon.ico")

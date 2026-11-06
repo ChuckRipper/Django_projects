@@ -1,0 +1,28 @@
+{% load static %}<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Błąd serwera – Nihongo SRS</title>
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif;
+           background: #faf7f2; color: #1f2933; text-align: center; padding: 16px; }
+    .kanji { font-size: 5rem; color: #1f3a5f; line-height: 1; }
+    a { color: #1f3a5f; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1b1d21; color: #e6e8eb; }
+      .kanji, a { color: #7ea6d9; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="kanji">故障</div>
+    <p>こしょう · koshō, „awaria”</p>
+    <h1>Coś poszło nie tak</h1>
+    <p>Wystąpił błąd serwera. Spróbuj ponownie za chwilę.</p>
+    <p><a href="/">Wróć na stronę główną</a></p>
+  </main>
+</body>
+</html>

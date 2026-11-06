@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from decks.models import Card
 
@@ -16,7 +17,7 @@ class ReviewState(models.Model):
     repetitions = models.PositiveIntegerField(default=0)
     lapses = models.PositiveIntegerField(default=0)
     due_at = models.DateTimeField(db_index=True)
-    introduced_at = models.DateTimeField(auto_now_add=True)
+    introduced_at = models.DateTimeField(default=timezone.now)
     last_reviewed_at = models.DateTimeField(null=True, blank=True)
 
     MATURE_INTERVAL_DAYS = 21

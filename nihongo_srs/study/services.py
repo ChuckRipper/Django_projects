@@ -79,7 +79,9 @@ def submit_review(user, card, rating, response_ms=None, now=None):
     """Apply the configured scheduling strategy and record the answer."""
     now = now or timezone.now()
     rating = Rating(int(rating))
-    state, _ = ReviewState.objects.get_or_create(user=user, card=card, defaults={"due_at": now})
+    state, _ = ReviewState.objects.get_or_create(
+        user=user, card=card, defaults={"due_at": now, "introduced_at": now}
+    )
     interval_before = state.interval_days
 
     strategy = get_strategy(settings.SRS_ALGORITHM)
