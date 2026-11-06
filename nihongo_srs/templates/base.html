@@ -29,8 +29,8 @@
 <body class="d-flex flex-column min-vh-100">
 <nav class="navbar navbar-expand-lg navbar-dark ns-navbar mb-4">
   <div class="container">
-    <a class="navbar-brand ns-logo jp" href="{% url 'home' %}">
-      <span class="ns-logo-jp">日本語</span><span class="ns-logo-srs">SRS</span>
+    <a class="navbar-brand" href="{% url 'home' %}">
+      <img src="{% static 'img/logo-light.svg' %}" alt="Nihongo SRS" height="32">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Menu">
       <span class="navbar-toggler-icon"></span>
@@ -75,7 +75,7 @@
 
 <footer class="border-top py-3 small text-body-secondary">
   <div class="container d-flex flex-wrap justify-content-between gap-2">
-    <span>Nihongo SRS · projekt zaliczeniowy, WSB Merito Chorzów</span>
+    <span>Nihongo SRS · projekt zaliczeniowy, WSB Merito Chorzów · <a href="{% url 'about' %}" class="link-secondary">O aplikacji</a></span>
     <span>
       Dane: <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" class="link-secondary">KANJIDIC</a> (CC BY-SA 4.0),
       listy JLPT: <a href="http://www.tanos.co.uk/jlpt/" class="link-secondary">tanos.co.uk</a> ·

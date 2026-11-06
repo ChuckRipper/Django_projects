@@ -50,18 +50,12 @@ body {
   background-color: #1f3a5f;
 }
 
-.ns-logo {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.ns-logo .ns-logo-jp {
-  color: #ffffff;
-}
-
-.ns-logo .ns-logo-srs {
-  color: #ef6f7f;
-  margin-left: 0.25rem;
+/* The light logo variant is used on the dark-indigo navbar; on the about page the
+   coloured variant needs a light background in dark mode. */
+[data-bs-theme="dark"] .about-logo {
+  background: #faf7f2;
+  border-radius: 12px;
+  padding: 6px 10px;
 }
 
 .card {

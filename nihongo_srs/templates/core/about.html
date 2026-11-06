@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}O aplikacji – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-9">
+  <img src="{% static 'img/logo.svg' %}" alt="Nihongo SRS" height="56" class="mb-4 about-logo">
+  <h1 class="h3">O aplikacji</h1>
+  <p class="lead">Nihongo SRS pomaga uczyć się japońskiego metodą <strong>powtórek rozłożonych w czasie</strong> (SRS, <em>spaced repetition system</em>).</p>
+
+  <h2 class="h5 mt-4">Jak to działa?</h2>
+  <ol>
+    <li>Wybierasz talię (np. hiraganę albo kanji N5) i rozpoczynasz naukę.</li>
+    <li>Widzisz przód karty, przypominasz sobie odpowiedź i odsłaniasz ją.</li>
+    <li>Oceniasz, jak dobrze pamiętałeś. Algorytm <strong>SM-2</strong> wylicza, kiedy pokazać kartę ponownie: łatwe karty wracają coraz rzadziej, trudne częściej.</li>
+    <li>Codziennie dostajesz zaległe powtórki oraz kilka nowych kart (limit ustawisz w profilu).</li>
+  </ol>
+
+  <div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead><tr><th>Ocena</th><th>Klawisz</th><th>Kiedy wybrać</th><th>Efekt</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge text-bg-danger">Znów</span></td><td><kbd>1</kbd></td><td>nie pamiętałeś</td><td>karta wraca za 10 minut, nauka od nowa</td></tr>
+      <tr><td><span class="badge text-bg-warning">Trudne</span></td><td><kbd>2</kbd></td><td>pamiętałeś z dużym wysiłkiem</td><td>krótszy odstęp</td></tr>
+      <tr><td><span class="badge text-bg-success">Dobre</span></td><td><kbd>3</kbd></td><td>pamiętałeś po chwili namysłu</td><td>standardowy odstęp (1 dzień → 6 dni → coraz dłużej)</td></tr>
+      <tr><td><span class="badge text-bg-primary">Łatwe</span></td><td><kbd>4</kbd></td><td>odpowiedź od razu</td><td>dłuższy odstęp</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="small text-body-secondary">Odpowiedź odsłaniasz <kbd>spacją</kbd> lub <kbd>Enterem</kbd>. Karta jest „opanowana”, gdy jej odstęp przekroczy 21 dni.</p>
+
+  <h2 class="h5 mt-4">Materiał</h2>
+  <ul>
+    <li><strong>Kana</strong>: hiragana i katakana (znaki podstawowe, dakuten, połączenia yōon).</li>
+    <li><strong>Kanji N5 i N4</strong>: 245 znaków ze znaczeniami po polsku, odczytami on/kun, liczbą kresek i przykładami.</li>
+    <li><strong>Słownictwo N5 i N4</strong>: ok. 1400 słów (N5 po polsku, N4 na razie po angielsku).</li>
+    <li><strong>Własne talie</strong>: dodawane ręcznie lub importowane z pliku CSV.</li>
+  </ul>
+
+  <h2 class="h5 mt-4">Źródła danych</h2>
+  <ul class="small">
+    <li>Kanji: <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project">KANJIDIC</a> (Electronic Dictionary Research and Development Group, CC BY-SA 4.0), w opracowaniu <a href="https://github.com/davidluzgouveia/kanji-data">davidluzgouveia/kanji-data</a> (MIT).</li>
+    <li>Słownictwo i poziomy JLPT: listy Jonathana Wallera (<a href="http://www.tanos.co.uk/jlpt/">tanos.co.uk</a>) w opracowaniu <a href="https://github.com/jamsinclair/open-anki-jlpt-decks">open-anki-jlpt-decks</a> (MIT).</li>
+    <li>Polskie tłumaczenia: przygotowane na potrzeby projektu.</li>
+  </ul>
+
+  <h2 class="h5 mt-4">Technologie</h2>
+  <p class="small">Python, Django 5.2 LTS, Django REST Framework (dokumentacja API: <a href="/api/docs/">Swagger</a>), JWT, Bootstrap 5.3, Chart.js, SQLite.</p>
+
+  <p class="small text-body-secondary mt-4 mb-0">Projekt zaliczeniowy z przedmiotu „Aplikacje internetowe w Django”, WSB Merito Chorzów. Autor: Cezary Kalinowski.</p>
+</div></div>
+{% endblock %}

@@ -6,15 +6,19 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Secrets and debug mode come from the environment in production (PythonAnywhere);
+# Production values come from environment variables (set in the PythonAnywhere WSGI file);
 # the fallbacks below are for local development only.
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-dev-only-change-me-in-production-nihongo-srs",
-)
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError("Set DJANGO_SECRET_KEY when DJANGO_DEBUG is False.")
+    SECRET_KEY = "django-insecure-dev-only-nihongo-srs"
+
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".pythonanywhere.com"]
+ALLOWED_HOSTS += [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = ["https://*.pythonanywhere.com"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -122,6 +126,27 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
+}
+
+# --- Security (production only) ------------------------------------------------
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # PythonAnywhere terminates TLS
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # *.pythonanywhere.com is shared by many sites
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    # HSTS for subdomains / preload is deliberately off: the site lives on a shared
+    # *.pythonanywhere.com domain that we do not control.
+    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
 }
 
 SIMPLE_JWT = {

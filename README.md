@@ -1,3 +1,5 @@
+<p align="center"><img src="nihongo_srs/static/img/logo.svg" alt="Nihongo SRS" height="72"></p>
+
 # Nihongo SRS
 
 Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek rozłożonych w czasie** (SRS, *spaced repetition system*). Użytkownik uczy się kart z sylabariuszami kana, słownictwem i kanji na poziomach JLPT N5–N4, ocenia, jak dobrze pamiętał odpowiedź, a algorytm SM-2 sam planuje kolejną powtórkę, osobno dla każdego użytkownika i każdej karty.
@@ -5,7 +7,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 > Projekt zaliczeniowy z przedmiotu *Aplikacje internetowe w Django* (mgr inż. Marek Foryś), WSB Merito Chorzów, Informatyka II stopnia, specjalność Programista Python.
 > Autor: Cezary Kalinowski
 
-**Status:** 🚧 w budowie. Etapy M1 (fundament) i M2 (treść i statystyki) gotowe, patrz [Plan prac](#plan-prac).
+**Status:** 🚧 w budowie. Etapy M1 i M2 gotowe, M3 w toku, patrz [Plan prac](#plan-prac).
 
 ---
 
@@ -42,7 +44,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **Statystyki** | wykres powtórek z 30 dni (poprawne / „Znów”), heatmapa aktywności z 20 tygodni, rozkład ocen, nadchodzące powtórki na 7 dni, skuteczność i średni czas odpowiedzi w każdej talii |
 | **Import i eksport** | wczytywanie kart z pliku CSV (polskie lub angielskie nagłówki, automatyczny separator, raport błędów z numerami wierszy), eksport talii do CSV w tym samym formacie |
 | **Panel admina** | zarządzanie taliami systemowymi i kartami, podgląd historii powtórek |
-| **Interfejs** | po polsku, responsywny, motyw jasny i ciemny z przełącznikiem, własna strona 404, skróty klawiszowe w nauce |
+| **Interfejs** | po polsku, responsywny (sprawdzony od 390 px), motyw jasny i ciemny z przełącznikiem, własne strony 404 i 500, skróty klawiszowe w nauce, strona „O aplikacji” z instrukcją i źródłami danych |
 | **REST API** | uwierzytelnianie JWT, talie, karty, kolejka nauki, zapis oceny, statystyki; dokumentacja Swagger UI generowana automatycznie |
 
 ### Rozszerzenia (planowane, jeśli starczy czasu)
@@ -178,7 +180,7 @@ Pliki źródłowe leżą w `decks/data/`, a szczegóły opisuje `decks/data/SOUR
 
 ## Identyfikacja wizualna
 
-- **Logo:** 日本語 (*nihongo*) + „SRS” w kolorze akcentu; wersja pozioma (pasek nawigacji) i kwadratowa (favicon), format SVG.
+- **Logo** ✅: znak 日 + napis 日本語 (indygo) i „SRS” (cynober); `static/img/logo.svg` na jasne tło i `logo-light.svg` na ciemne (pasek nawigacji). Napisy zamienione na ścieżki (font Noto Sans CJK JP Bold, licencja SIL OFL), więc logo wygląda tak samo bez względu na zainstalowane fonty.
 - **Favicon** ✅: znak 日 (pierwszy znak słowa 日本語) na tle indygo, środkowa kreska w kolorze cynobru; `static/img/favicon.svg` + `favicon.ico` (16/32/48 px) + `apple-touch-icon.png` (180 px). Znak narysowany kształtami, więc nie zależy od fontów systemu.
 - **Kolejność prac:** najpierw paleta kolorów aplikacji (zmienne CSS), logo projektowane na końcu w kolorach przewodnich.
 - **Motyw jasny i ciemny** z przełącznikiem; wybór zapamiętywany w przeglądarce.
@@ -273,13 +275,13 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **70 testów**:
+Obecnie **73 testy**:
 
 | Plik | Zakres |
 |---|---|
-| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit, kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
+| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
 | `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
-| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter |
+| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, 500, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
 
@@ -293,7 +295,49 @@ Obecnie **70 testów**:
 | Source code / Working directory | `/home/Czarodziej/Django_projects/nihongo_srs` |
 | Virtualenv | `/home/Czarodziej/venv_django` |
 | Static files | `/static/` → `/home/Czarodziej/Django_projects/nihongo_srs/staticfiles` |
-| `DJANGO_SETTINGS_MODULE` | `config.settings` |
+
+Konfiguracja produkcyjna pochodzi ze zmiennych środowiskowych ustawianych w pliku WSGI na PythonAnywhere (poza repozytorium):
+
+| Zmienna | Wartość na produkcji | Znaczenie |
+|---|---|---|
+| `DJANGO_DEBUG` | `False` | wyłącza tryb deweloperski i włącza ustawienia bezpieczeństwa (HTTPS, bezpieczne ciasteczka, HSTS) |
+| `DJANGO_SECRET_KEY` | losowy ciąg (np. `python -c "import secrets; print(secrets.token_urlsafe(50))"`) | wymagany przy `DJANGO_DEBUG=False`; bez niego aplikacja nie wystartuje |
+| `DJANGO_ALLOWED_HOSTS` | opcjonalnie, po przecinku | dodatkowe domeny (`*.pythonanywhere.com` jest dozwolone domyślnie) |
+
+Plik WSGI (`/var/www/czarodziej_pythonanywhere_com_wsgi.py`):
+
+```python
+import os
+import sys
+
+path = "/home/Czarodziej/Django_projects/nihongo_srs"
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
+os.environ["DJANGO_DEBUG"] = "False"
+os.environ["DJANGO_SECRET_KEY"] = "<wygenerowany sekret>"
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+```
+
+Pierwsze wdrożenie (konsola Bash na PythonAnywhere):
+
+```bash
+git clone https://github.com/ChuckRipper/Django_projects.git
+source ~/venv_django/bin/activate
+pip install -r ~/Django_projects/nihongo_srs/requirements.txt
+cd ~/Django_projects/nihongo_srs
+python manage.py migrate
+python manage.py load_data
+python manage.py collectstatic --noinput
+python manage.py createsuperuser
+```
+
+Aktualizacja: `git pull` → `migrate` → `collectstatic --noinput` → przycisk **Reload** w zakładce Web.
+
+`python manage.py check --deploy` (z ustawionymi zmiennymi produkcyjnymi) nie zgłasza ostrzeżeń. Dwa sprawdzenia HSTS (subdomeny, preload) są świadomie wyciszone, bo aplikacja działa we współdzielonej domenie `pythonanywhere.com`.
 
 Darmowe konto obsługuje jedną aplikację webową, więc wdrożenie projektu odbywa się po ocenie zadań, które zajmują ją wcześniej.
 
@@ -325,12 +369,12 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | UI, logo, dokumentacja projektu, wdrożenie na PythonAnywhere | ⏳ |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strona 500, ✅ ustawienia produkcyjne, ✅ widok mobilny; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere, ⏳ scenariusz testów manualnych | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:
 
-- [ ] zatwierdzenie palety kolorów
+- [x] zatwierdzenie palety kolorów
 - [x] potwierdzenie licencji list JLPT (MIT, atrybucja w stopce i `SOURCES.md`)
 - [ ] termin wdrożenia na PythonAnywhere (konto współdzielone z zadaniami)
 

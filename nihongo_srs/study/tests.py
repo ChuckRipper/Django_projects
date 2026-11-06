@@ -95,6 +95,10 @@ class StudyServiceTests(TestCase):
         # card 0 is due tomorrow, so only 2 new cards are offered now
         self.assertEqual([c.front for c in services.build_queue(self.user)], ["k1", "k2"])
 
+    def test_backdated_review_does_not_use_todays_limit(self):
+        services.submit_review(self.user, self.cards[0], Rating.GOOD, now=timezone.now() - timedelta(days=3))
+        self.assertEqual(services.new_cards_left_today(self.user), 3)
+
     def test_due_cards_come_before_new_cards(self):
         now = timezone.now()
         services.submit_review(self.user, self.cards[4], Rating.GOOD, now=now - timedelta(days=2))
