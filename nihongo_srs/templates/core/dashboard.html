@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
   <h1 class="h3 mb-0">おかえり, {{ user.username }}!</h1>
-  <a href="{% url 'study' %}" class="btn btn-primary btn-lg {% if not summary.due_now and not summary.new_available %}disabled{% endif %}">
+  <a href="{% url 'study' %}" data-shortcut="u" data-shortcut-label="rozpocznij naukę" class="btn btn-primary btn-lg {% if not summary.due_now and not summary.new_available %}disabled{% endif %}">
     <i class="bi bi-lightning-charge"></i> Rozpocznij naukę
   </a>
 </div>

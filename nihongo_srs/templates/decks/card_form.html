@@ -9,8 +9,9 @@
       {% csrf_token %}
       {% include '_form.html' %}
       <button class="btn btn-primary">Zapisz</button>
-      {% if not object %}<button class="btn btn-outline-primary" name="save_and_add" value="1">Zapisz i dodaj kolejną</button>{% endif %}
+      {% if not object %}<button class="btn btn-outline-primary" name="save_and_add" value="1" data-ctrl-enter>Zapisz i dodaj kolejną</button>{% endif %}
       <a href="{% url 'deck_detail' deck.pk %}" class="btn btn-secondary">Anuluj</a>
+      <p class="form-text mt-2 mb-0 d-none d-lg-block"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> w dowolnym polu: {% if object %}zapisz{% else %}zapisz i dodaj kolejną{% endif %}.</p>
     </form>
   </div></div>
 </div></div>

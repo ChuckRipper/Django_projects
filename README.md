@@ -44,7 +44,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **Statystyki** | wykres powtórek z 30 dni (poprawne / „Znów”), heatmapa aktywności z 20 tygodni, rozkład ocen, nadchodzące powtórki na 7 dni, skuteczność i średni czas odpowiedzi w każdej talii |
 | **Import i eksport** | wczytywanie kart z pliku CSV (polskie lub angielskie nagłówki, automatyczny separator, raport błędów z numerami wierszy), eksport talii do CSV w tym samym formacie |
 | **Panel admina** | zarządzanie taliami systemowymi i kartami, podgląd historii powtórek |
-| **Interfejs** | po polsku, responsywny (sprawdzony od 390 px), motyw jasny i ciemny z przełącznikiem, własne strony błędów 400, 403, 404, 405 i 500 (w API odpowiedzi JSON), skróty klawiszowe w nauce, strona „O aplikacji” z instrukcją i źródłami danych |
+| **Interfejs** | po polsku, responsywny (sprawdzony od 390 px), motyw jasny i ciemny z przełącznikiem, własne strony błędów 400, 403, 404, 405 i 500 (w API odpowiedzi JSON), skróty klawiszowe (nauka, motyw, nawigacja, formularze; lista pod klawiszem `?`, podpowiedzi w dymkach), strona „O aplikacji” z instrukcją i źródłami danych |
 | **REST API** | uwierzytelnianie JWT, talie, karty, kolejka nauki, zapis oceny, statystyki; dokumentacja Swagger UI generowana automatycznie |
 
 ### Rozszerzenia (planowane, jeśli starczy czasu)
@@ -274,7 +274,7 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **80 testów**:
+Obecnie **81 testów**:
 
 | Plik | Zakres |
 |---|---|
@@ -283,7 +283,7 @@ Obecnie **80 testów**:
 | `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
-| `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow` |
+| `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow`; okno skrótów klawiszowych |
 
 ---
 

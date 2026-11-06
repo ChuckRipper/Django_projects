@@ -30,6 +30,18 @@ urlpatterns = [
 ]
 
 
+class KeyboardShortcutTests(TestCase):
+    def test_help_window_and_hints(self):
+        get_user_model().objects.create_user("kenji", password="Sakura-2026!")
+        self.client.login(username="kenji", password="Sakura-2026!")
+        response = self.client.get("/")
+        self.assertContains(response, 'id="shortcuts-modal"')
+        self.assertContains(response, 'data-shortcut="t"')  # theme toggle
+        self.assertContains(response, 'data-shortcut="u"')  # start studying
+        self.assertContains(response, "js/shortcuts.js")
+        self.assertContains(self.client.get("/talie/"), 'data-shortcut="f"')
+
+
 @override_settings(ROOT_URLCONF=__name__)
 class ErrorPageTests(TestCase):
     """Every error status gets its own page on the website and a JSON body in the API."""
