@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpResponseBadRequest
+from django.core.exceptions import BadRequest
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
@@ -42,7 +43,7 @@ class StudyView(LoginRequiredMixin, View):
         deck = self.get_deck()
         form = ReviewForm(request.POST)
         if not form.is_valid():
-            return HttpResponseBadRequest("Nieprawidłowa ocena.")
+            raise BadRequest("Nieprawidłowa ocena.")
         visible = Card.objects.filter(deck__in=Deck.objects.visible_to(request.user))
         try:
             card = visible.get(pk=form.cleaned_data["card_id"])

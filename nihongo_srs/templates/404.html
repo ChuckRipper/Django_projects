@@ -1,11 +1,7 @@
-{% extends 'base.html' %}
+{% extends '_error.html' %}
 {% block title %}Nie znaleziono – Nihongo SRS{% endblock %}
-{% block content %}
-<div class="text-center py-5">
-  <div class="hero-kanji jp mb-3">迷子</div>
-  <p class="text-body-secondary jp mb-1">まいご · maigo, „zagubiony”</p>
-  <h1 class="h3 mt-3">Strona nie istnieje</h1>
-  <p class="text-body-secondary">Adres jest nieprawidłowy albo ta strona została usunięta.</p>
-  <a href="{% url 'home' %}" class="btn btn-primary">Wróć na stronę główną</a>
-</div>
-{% endblock %}
+{% block kanji %}迷子{% endblock %}
+{% block reading %}まいご · maigo, „zagubiony”{% endblock %}
+{% block code %}BŁĄD 404{% endblock %}
+{% block heading %}Strona nie istnieje{% endblock %}
+{% block message %}Adres jest nieprawidłowy albo ta strona została usunięta.{% endblock %}

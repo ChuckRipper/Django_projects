@@ -1,0 +1,30 @@
+{% load static %}<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} – Nihongo SRS</title>
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif;
+           background: #faf7f2; color: #1f2933; text-align: center; padding: 16px; }
+    .kanji { font-size: 5rem; color: #1f3a5f; line-height: 1; }
+    .code { color: #d1495b; font-weight: 600; letter-spacing: .1em; }
+    a { color: #1f3a5f; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1b1d21; color: #e6e8eb; }
+      .kanji, a { color: #7ea6d9; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="kanji">{% block kanji %}{% endblock %}</div>
+    <p>{% block reading %}{% endblock %}</p>
+    <p class="code">{% block code %}{% endblock %}</p>
+    <h1>{% block heading %}{% endblock %}</h1>
+    <p>{% block message %}{% endblock %}</p>
+    <p><a href="/">Wróć na stronę główną</a></p>
+  </main>
+</body>
+</html>

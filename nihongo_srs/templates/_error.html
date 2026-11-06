@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center py-5">
+  <div class="hero-kanji jp mb-3">{% block kanji %}{% endblock %}</div>
+  <p class="text-body-secondary jp mb-1">{% block reading %}{% endblock %}</p>
+  <p class="text-accent fw-semibold small mt-3 mb-0">{% block code %}{% endblock %}</p>
+  <h1 class="h3 mt-1">{% block heading %}{% endblock %}</h1>
+  <p class="text-body-secondary">{% block message %}{% endblock %}</p>
+  {% block actions %}<a href="{% url 'home' %}" class="btn btn-primary">Wróć na stronę główną</a>{% endblock %}
+</div>
+{% endblock %}

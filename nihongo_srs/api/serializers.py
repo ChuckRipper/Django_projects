@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from decks.models import Card, Deck
 from study.models import ReviewLog, ReviewState
@@ -133,3 +134,9 @@ class DailyReviewsSerializer(serializers.Serializer):
     date = serializers.DateField()
     correct = serializers.IntegerField()
     again = serializers.IntegerField()
+
+
+class TokenObtainSerializer(TokenObtainPairSerializer):
+    """JWT login with a Polish error message (simplejwt ships no Polish translation)."""
+
+    default_error_messages = {"no_active_account": "Nieprawidłowy login lub hasło."}
