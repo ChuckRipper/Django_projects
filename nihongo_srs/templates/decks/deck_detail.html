@@ -12,8 +12,10 @@
   </div>
   <div class="d-flex gap-2">
     <a href="{% url 'study_deck' deck.pk %}" class="btn btn-primary"><i class="bi bi-lightning-charge"></i> Ucz się</a>
+    <a href="{% url 'deck_export' deck.pk %}" class="btn btn-outline-secondary" title="Eksport do CSV"><i class="bi bi-download"></i></a>
     {% if can_edit %}
     <a href="{% url 'card_create' deck.pk %}" class="btn btn-accent"><i class="bi bi-plus-lg"></i> Karta</a>
+    <a href="{% url 'card_import' deck.pk %}" class="btn btn-outline-primary" title="Import z CSV"><i class="bi bi-upload"></i> CSV</a>
     <a href="{% url 'deck_update' deck.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
     <a href="{% url 'deck_delete' deck.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
     {% endif %}
@@ -28,14 +30,14 @@
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead><tr><th>#</th><th>Przód</th><th>Odpowiedź</th><th>Odczyt</th>{% if deck.kind == 'kanji' %}<th>On / Kun</th><th>Kreski</th>{% endif %}{% if can_edit %}<th class="text-end">Akcje</th>{% endif %}</tr></thead>
+      <thead><tr><th>#</th><th>Przód</th><th>Odpowiedź</th>{% if deck.kind != 'kanji' %}<th>Odczyt</th>{% endif %}{% if deck.kind == 'kanji' %}<th>On / Kun</th><th>Kreski</th>{% endif %}{% if can_edit %}<th class="text-end">Akcje</th>{% endif %}</tr></thead>
       <tbody>
         {% for card in cards %}
         <tr>
           <td class="text-body-secondary">{{ forloop.counter }}</td>
           <td class="jp fs-4">{{ card.front }}</td>
-          <td>{{ card.back }}</td>
-          <td class="jp">{{ card.reading|default:"—" }}</td>
+          <td>{{ card.back }}{% if card.meaning_en and card.meaning_en != card.back %}<div class="small text-body-secondary">{{ card.meaning_en }}</div>{% endif %}</td>
+          {% if deck.kind != 'kanji' %}<td class="jp">{{ card.reading|default:"—" }}</td>{% endif %}
           {% if deck.kind == 'kanji' %}<td class="jp small">{{ card.onyomi|default:"—" }} / {{ card.kunyomi|default:"—" }}</td><td>{{ card.stroke_count|default:"—" }}</td>{% endif %}
           {% if can_edit %}
           <td class="text-end text-nowrap">

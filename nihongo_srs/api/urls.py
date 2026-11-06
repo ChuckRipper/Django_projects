@@ -16,6 +16,7 @@ urlpatterns = [
     path("study/queue/", views.StudyQueueView.as_view(), name="api-study-queue"),
     path("study/review/", views.ReviewView.as_view(), name="api-study-review"),
     path("stats/summary/", views.SummaryView.as_view(), name="api-stats-summary"),
+    path("stats/daily/", views.DailyReviewsView.as_view(), name="api-stats-daily"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),

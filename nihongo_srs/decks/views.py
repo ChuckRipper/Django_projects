@@ -1,15 +1,20 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView
 
 from study.services import deck_progress
 
-from .forms import CardForm, DeckForm
+from . import services
+from .forms import CardForm, CardImportForm, DeckForm
 from .mixins import OwnedCardMixin, OwnedDeckMixin, get_owned_deck_or_404
 from .models import Card, Deck
+from .sources import CsvCardSource
 
 
 class DeckListView(LoginRequiredMixin, ListView):
@@ -162,3 +167,37 @@ class CardDeleteView(LoginRequiredMixin, OwnedCardMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, f"Usunięto kartę „{self.object.front}”.")
         return super().form_valid(form)
+
+
+class CardImportView(LoginRequiredMixin, FormView):
+    form_class = CardImportForm
+    template_name = "decks/import.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            self.deck = get_owned_deck_or_404(request.user, kwargs["pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        return {**super().get_context_data(**kwargs), "deck": self.deck}
+
+    def form_valid(self, form):
+        source = CsvCardSource.from_upload(form.cleaned_data["file"])
+        report = services.import_cards(self.deck, source, form.cleaned_data["update_existing"])
+        if report.created or report.updated:
+            messages.success(
+                self.request, f"Import zakończony: nowe karty {report.created}, zaktualizowane {report.updated}."
+            )
+        if report.errors:
+            return self.render_to_response(self.get_context_data(form=form, report=report))
+        return redirect("deck_detail", pk=self.deck.pk)
+
+
+@login_required
+def deck_export(request, pk):
+    """Download a deck (own or system) as CSV - the same format the import accepts."""
+    deck = get_object_or_404(Deck.objects.visible_to(request.user), pk=pk)
+    response = HttpResponse(services.export_csv(deck), content_type="text/csv; charset=utf-8")
+    filename = f"talia-{deck.pk}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

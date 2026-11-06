@@ -38,3 +38,28 @@ class CardForm(forms.ModelForm):
         if Card.objects.filter(deck=self.deck, front=front).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("Ta karta już jest w talii.")
         return front
+
+
+class CardImportForm(forms.Form):
+    file = forms.FileField(
+        label="Plik CSV",
+        help_text=(
+            "Pierwszy wiersz to nagłówki. Wymagane kolumny: <code>front</code> (lub <code>przod</code>) "
+            "i <code>back</code> (lub <code>tyl</code>); opcjonalne: <code>reading</code>, <code>example</code>, "
+            "<code>onyomi</code>, <code>kunyomi</code>, <code>stroke_count</code>. Separator: przecinek, średnik "
+            "lub tabulator. Maks. 1 MB."
+        ),
+    )
+    update_existing = forms.BooleanField(
+        label="Aktualizuj istniejące karty (o tym samym przodzie)", required=False, initial=True,
+    )
+
+    MAX_SIZE = 1024 * 1024
+
+    def clean_file(self):
+        uploaded = self.cleaned_data["file"]
+        if uploaded.size > self.MAX_SIZE:
+            raise forms.ValidationError("Plik jest za duży (maks. 1 MB).")
+        if not uploaded.name.lower().endswith((".csv", ".txt", ".tsv")):
+            raise forms.ValidationError("Dozwolone są pliki .csv, .tsv lub .txt.")
+        return uploaded

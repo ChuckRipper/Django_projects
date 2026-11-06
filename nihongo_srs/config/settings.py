@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "accounts",
     "decks",
     "study",
+    "stats",
     "api",
 ]
 
@@ -87,6 +88,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"  # collectstatic target (PythonAnywhere)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTHENTICATION_BACKENDS = ["accounts.backends.CaseInsensitiveModelBackend"]
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"

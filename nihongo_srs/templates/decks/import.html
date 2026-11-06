@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Import kart – Nihongo SRS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{% url 'deck_list' %}">Talie</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'deck_detail' deck.pk %}">{{ deck.name }}</a></li>
+  <li class="breadcrumb-item active">Import CSV</li>
+</ol></nav>
+<div class="row justify-content-center g-4"><div class="col-lg-7">
+  {% if report %}
+  <div class="alert alert-warning">
+    <h2 class="h6">Import zakończony z uwagami</h2>
+    <p class="mb-2">Nowe karty: {{ report.created }} · zaktualizowane: {{ report.updated }} · pominięte: {{ report.skipped }}</p>
+    <ul class="mb-0 small">
+      {% for error in report.errors|slice:":20" %}<li>{% if error.line %}Wiersz {{ error.line }}: {% endif %}{{ error.message }}</li>{% endfor %}
+    </ul>
+    {% if report.errors|length > 20 %}<p class="small mb-0 mt-1">…i {{ report.errors|length|add:"-20" }} kolejnych.</p>{% endif %}
+    <a href="{% url 'deck_detail' deck.pk %}" class="btn btn-sm btn-outline-secondary mt-2">Przejdź do talii</a>
+  </div>
+  {% endif %}
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-1">Import kart z CSV</h1>
+    <p class="text-body-secondary small mb-3">Talia: {{ deck.name }} ({{ deck.get_kind_display }})</p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% include '_form.html' %}
+      <button class="btn btn-primary"><i class="bi bi-upload"></i> Importuj</button>
+      <a href="{% url 'deck_detail' deck.pk %}" class="btn btn-secondary">Anuluj</a>
+    </form>
+  </div></div>
+  <div class="card shadow-sm mt-3"><div class="card-body">
+    <h2 class="h6">Przykładowy plik</h2>
+<pre class="small mb-0 jp">front,back,reading,example
+猫,kot,ねこ,猫が好きです。
+犬,pies,いぬ,
+</pre>
+  </div></div>
+</div></div>
+{% endblock %}

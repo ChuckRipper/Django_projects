@@ -87,6 +87,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
         extra_kwargs = {"email": {"required": True}}
 
+    def validate_username(self, value):
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Ta nazwa użytkownika jest już zajęta.")
+        return value
+
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("Konto z tym adresem e-mail już istnieje.")
@@ -100,3 +105,31 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class CardImportSerializer(serializers.Serializer):
+    file = serializers.FileField(help_text="Plik CSV (UTF-8, maks. 1 MB)")
+    update_existing = serializers.BooleanField(default=True, help_text="Aktualizuj karty o tym samym przodzie")
+
+    def validate_file(self, value):
+        if value.size > 1024 * 1024:
+            raise serializers.ValidationError("Plik jest za duży (maks. 1 MB).")
+        return value
+
+
+class ImportErrorSerializer(serializers.Serializer):
+    line = serializers.IntegerField()
+    message = serializers.CharField()
+
+
+class ImportReportSerializer(serializers.Serializer):
+    created = serializers.IntegerField()
+    updated = serializers.IntegerField()
+    skipped = serializers.IntegerField()
+    errors = ImportErrorSerializer(many=True)
+
+
+class DailyReviewsSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    correct = serializers.IntegerField()
+    again = serializers.IntegerField()

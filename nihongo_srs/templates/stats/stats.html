@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Statystyki – Nihongo SRS{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Statystyki</h1>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Powtórki (30 dni)</div>
+    <div class="stat-value">{{ daily_total }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Seria dni nauki</div>
+    <div class="stat-value">{{ summary.streak_days }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Skuteczność</div>
+    <div class="stat-value">{% if summary.accuracy_percent is None %}—{% else %}{{ summary.accuracy_percent }}%{% endif %}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Karty opanowane</div>
+    <div class="stat-value">{{ stages.mature }} <span class="fs-6 text-body-secondary">/ {{ stages.total }}</span></div>
+  </div></div></div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <h2 class="h6 mb-0">Powtórki dziennie</h2>
+  <p class="small text-body-secondary">Ostatnie 30 dni, z podziałem na odpowiedzi poprawne i oceny „Znów”.</p>
+  <div class="chart-box"><canvas id="daily-chart" role="img" aria-label="Wykres powtórek z ostatnich 30 dni"></canvas></div>
+  <details class="mt-2 small">
+    <summary>Pokaż dane w tabeli</summary>
+    <div class="table-responsive mt-2" style="max-height: 260px">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Dzień</th><th class="text-end">Poprawne</th><th class="text-end">Znów</th></tr></thead>
+        <tbody>{% for d in daily reversed %}<tr><td>{{ d.date|date:"d.m.Y" }}</td><td class="text-end">{{ d.correct }}</td><td class="text-end">{{ d.again }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </details>
+</div></div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <h2 class="h6 mb-0">Aktywność</h2>
+  <p class="small text-body-secondary">Liczba powtórek w kolejnych dniach (ostatnie 20 tygodni).</p>
+  <div class="heatmap-wrap">
+    <div class="heatmap">
+      <div class="heatmap-days">{% for wd in weekdays %}<span>{% if forloop.counter0|divisibleby:2 %}{{ wd }}{% endif %}</span>{% endfor %}</div>
+      {% for column in heatmap %}
+      <div class="heatmap-col">
+        {% for cell in column %}
+          {% if cell %}<span class="hm hm-{{ cell.level }}" title="{{ cell.date|date:'d.m.Y' }}: {{ cell.count }} powtórek" aria-label="{{ cell.date|date:'d.m.Y' }}: {{ cell.count }} powtórek"></span>{% else %}<span class="hm hm-empty"></span>{% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-1 small text-body-secondary mt-2">
+    mniej <span class="hm hm-0"></span><span class="hm hm-1"></span><span class="hm hm-2"></span><span class="hm hm-3"></span><span class="hm hm-4"></span> więcej
+  </div>
+</div></div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card shadow-sm h-100"><div class="card-body">
+    <h2 class="h6">Oceny odpowiedzi</h2>
+    <table class="table table-sm align-middle mb-0">
+      <tbody>
+      {% for r in ratings %}
+        <tr>
+          <td style="width: 5rem">{{ r.label }}</td>
+          <td><div class="bar-track"><div class="bar-fill" style="width: {{ r.percent }}%"></div></div></td>
+          <td class="text-end text-nowrap" style="width: 6.5rem">{{ r.count }} <span class="text-body-secondary">({{ r.percent }}%)</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card shadow-sm h-100"><div class="card-body">
+    <h2 class="h6">Nadchodzące powtórki</h2>
+    <table class="table table-sm align-middle mb-0">
+      <tbody>
+      {% for u in upcoming %}
+        <tr>
+          <td style="width: 7rem">{% if forloop.first %}dziś{% elif forloop.counter == 2 %}jutro{% else %}{{ u.date|date:"D d.m" }}{% endif %}</td>
+          <td><div class="bar-track"><div class="bar-fill" style="width: {{ u.percent }}%"></div></div></td>
+          <td class="text-end" style="width: 4rem">{{ u.count }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div></div>
+  <div class="col-12"><div class="card shadow-sm"><div class="card-body">
+    <h2 class="h6">Etapy kart i talie</h2>
+    <p class="small mb-2">Nowe: <strong>{{ stages.new }}</strong> · w nauce: <strong>{{ stages.learning }}</strong> · opanowane (interwał ≥ 21 dni): <strong>{{ stages.mature }}</strong></p>
+    <div class="table-responsive">
+      <table class="table table-hover table-sm align-middle mb-0">
+        <thead><tr><th>Talia</th><th class="text-end">Powtórki</th><th class="text-end">Skuteczność</th><th class="text-end">Śr. czas odpowiedzi</th></tr></thead>
+        <tbody>
+        {% for d in decks %}
+          <tr><td><a href="{% url 'deck_detail' d.deck_id %}">{{ d.deck }}</a></td><td class="text-end">{{ d.total }}</td><td class="text-end">{{ d.accuracy }}%</td><td class="text-end">{% if d.avg_seconds %}{{ d.avg_seconds }} s{% else %}—{% endif %}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-body-secondary text-center py-3">Brak powtórek. <a href="{% url 'study' %}">Zacznij naukę</a>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div></div></div>
+</div>
+{{ daily_chart|json_script:"daily-data" }}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"></script>
+<script src="{% static 'js/stats.js' %}"></script>
+{% endblock %}

@@ -12,6 +12,7 @@ urlpatterns = [
     path("konto/", include("accounts.urls")),
     path("talie/", include("decks.urls")),
     path("nauka/", include("study.urls")),
+    path("statystyki/", include("stats.urls")),
     path("", include("core.urls")),
 ]
 
