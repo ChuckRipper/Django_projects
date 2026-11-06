@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Logowanie – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-5">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-3">Logowanie</h1>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.errors %}<div class="alert alert-danger">Nieprawidłowy login lub hasło.</div>{% endif %}
+      <div class="mb-3">
+        <label class="form-label" for="id_username">Login</label>
+        <input class="form-control" type="text" name="username" id="id_username" autofocus required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="id_password">Hasło</label>
+        <input class="form-control" type="password" name="password" id="id_password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100">Zaloguj</button>
+    </form>
+    <p class="small text-center mt-3 mb-0">Nie masz konta? <a href="{% url 'register' %}">Załóż je</a></p>
+  </div></div>
+</div></div>
+{% endblock %}

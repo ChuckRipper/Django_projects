@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Nauka – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 small text-body-secondary">
+  <span>{% if deck %}Talia: <a href="{% url 'deck_detail' deck.pk %}">{{ deck.name }}</a>{% else %}Wszystkie talie{% endif %}</span>
+  <span>W kolejce: <strong>{{ remaining }}</strong>{% if is_new %} · <span class="badge text-bg-info">nowa karta</span>{% endif %}</span>
+</div>
+<div class="row justify-content-center"><div class="col-lg-7">
+  <div class="card shadow study-card text-center">
+    <div class="card-body d-flex flex-column justify-content-center p-4">
+      <div class="small text-body-secondary mb-2">{{ card.deck.get_kind_display }}{% if card.deck.jlpt_level %} · {{ card.deck.jlpt_level }}{% endif %}</div>
+      <div class="study-front jp {% if card.front|length > 4 %}long{% endif %}">{{ card.front }}</div>
+
+      <div id="answer" class="d-none mt-4">
+        <hr>
+        <div class="fs-3 fw-semibold">{{ card.back }}</div>
+        {% if card.reading %}<div class="jp fs-5 text-body-secondary">{{ card.reading }}</div>{% endif %}
+        {% if card.onyomi or card.kunyomi %}
+        <div class="small mt-2 jp">on: {{ card.onyomi|default:"—" }} · kun: {{ card.kunyomi|default:"—" }}{% if card.stroke_count %} · kreski: {{ card.stroke_count }}{% endif %}</div>
+        {% endif %}
+        {% if card.example %}<div class="small text-body-secondary mt-2 jp">{{ card.example }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-3">
+    <button id="reveal-btn" class="btn btn-primary btn-lg px-5" type="button">Pokaż odpowiedź <span class="small opacity-75">(spacja)</span></button>
+  </div>
+
+  <form id="review-form" method="post" class="mt-3">
+    {% csrf_token %}
+    {{ form.card_id }}{{ form.response_ms }}
+    <div id="ratings" class="d-none d-flex flex-wrap justify-content-center gap-2">
+      <button class="btn btn-outline-danger rating-btn" name="rating" value="0">Znów <span class="small opacity-75">1</span></button>
+      <button class="btn btn-outline-warning rating-btn" name="rating" value="1">Trudne <span class="small opacity-75">2</span></button>
+      <button class="btn btn-outline-success rating-btn" name="rating" value="2">Dobre <span class="small opacity-75">3</span></button>
+      <button class="btn btn-outline-primary rating-btn" name="rating" value="3">Łatwe <span class="small opacity-75">4</span></button>
+    </div>
+  </form>
+</div></div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/study.js' %}"></script>{% endblock %}

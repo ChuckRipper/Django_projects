@@ -5,7 +5,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 > Projekt zaliczeniowy z przedmiotu *Aplikacje internetowe w Django* (mgr inż. Marek Foryś), WSB Merito Chorzów, Informatyka II stopnia, specjalność Programista Python.
 > Autor: Cezary Kalinowski
 
-**Status:** 🚧 w budowie, patrz [Plan prac](#plan-prac).
+**Status:** 🚧 w budowie. Etap M1 (fundament) gotowy, patrz [Plan prac](#plan-prac).
 
 ---
 
@@ -18,12 +18,14 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 5. [Algorytm powtórek (SM-2)](#algorytm-powtórek-sm-2)
 6. [Dane słownikowe i licencje](#dane-słownikowe-i-licencje)
 7. [Identyfikacja wizualna](#identyfikacja-wizualna)
-8. [Instalacja i uruchomienie](#instalacja-i-uruchomienie)
-9. [Testy](#testy)
-10. [Wdrożenie (PythonAnywhere)](#wdrożenie-pythonanywhere)
-11. [Workflow Git](#workflow-git)
-12. [Plan prac](#plan-prac)
-13. [Licencja](#licencja)
+8. [Wzorce projektowe](#wzorce-projektowe)
+9. [REST API (Swagger + JWT)](#rest-api-swagger--jwt)
+10. [Instalacja i uruchomienie](#instalacja-i-uruchomienie)
+11. [Testy](#testy)
+12. [Wdrożenie (PythonAnywhere)](#wdrożenie-pythonanywhere)
+13. [Workflow Git](#workflow-git)
+14. [Plan prac](#plan-prac)
+15. [Licencja](#licencja)
 
 ---
 
@@ -40,7 +42,8 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **Statystyki** | karty do powtórki dziś, seria dni nauki, skuteczność, karty wg etapu (nowe / w nauce / opanowane), wykres powtórek z ostatnich 30 dni |
 | **Import** | wczytywanie talii z pliku CSV z walidacją i raportem błędów |
 | **Panel admina** | zarządzanie taliami systemowymi i kartami, podgląd historii powtórek |
-| **Interfejs** | po polsku, responsywny, motyw jasny i ciemny z przełącznikiem, własna strona 404 |
+| **Interfejs** | po polsku, responsywny, motyw jasny i ciemny z przełącznikiem, własna strona 404, skróty klawiszowe w nauce |
+| **REST API** | uwierzytelnianie JWT, talie, karty, kolejka nauki, zapis oceny, statystyki; dokumentacja Swagger UI generowana automatycznie |
 
 ### Rozszerzenia (planowane, jeśli starczy czasu)
 
@@ -49,7 +52,6 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 - heatmapa aktywności w stylu GitHuba
 - eksport talii do CSV i udostępnianie własnych talii innym użytkownikom
 - reset hasła e-mailem
-- REST API (Django REST Framework)
 
 ### Materiał na start
 
@@ -69,9 +71,10 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Backend | Python 3.13, **Django 5.2 LTS** |
 | Baza danych | SQLite |
 | Frontend | szablony Django, Bootstrap 5.3 (motyw jasny i ciemny przez `data-bs-theme`), Bootstrap Icons |
+| REST API | Django REST Framework, drf-spectacular (OpenAPI 3 / Swagger UI), djangorestframework-simplejwt (JWT) |
 | Wykresy | Chart.js |
 | Wprowadzanie kana | WanaKana (rozszerzenie) |
-| Testy | `django.test` (`TestCase`, klient testowy) |
+| Testy | `django.test` (`TestCase`, `SimpleTestCase`, klient testowy), `rest_framework.test.APITestCase` |
 | Hosting | PythonAnywhere |
 
 Konwencje: kod, nazwy, komentarze i docstringi są **po angielsku**, interfejs użytkownika **po polsku**.
@@ -87,8 +90,9 @@ Projekt Django (`config/`) podzielony na aplikacje o jednej odpowiedzialności:
 | `accounts` | rejestracja, logowanie, profil i ustawienia użytkownika |
 | `decks` | talie i karty, CRUD, import CSV, komenda ładowania danych |
 | `study` | algorytm SM-2 (`srs.py`, czysta logika bez zależności od widoków), budowa kolejki, sesja nauki |
-| `stats` | agregacje i wykresy na podstawie historii powtórek |
-| `core` | wspólny szablon bazowy, strona główna, strony błędów, przełącznik motywu |
+| `api` | REST API: serializery, uprawnienia, widoki DRF, routing, Swagger |
+| `core` | strona główna i pulpit, strona 404, tag szablonu do formularzy Bootstrap |
+| `stats` *(M2)* | rozbudowane statystyki i wykresy na podstawie historii powtórek |
 
 ### Planowana struktura repozytorium
 
@@ -100,17 +104,19 @@ Django_projects/
 └── nihongo_srs/
     ├── manage.py
     ├── requirements.txt
-    ├── config/              # ustawienia projektu, główne urls.py, wsgi.py
-    ├── accounts/
-    ├── decks/
-    │   ├── data/            # pliki z kana i słownictwem/kanji N5–N4
+    ├── config/                 # settings.py, urls.py, wsgi.py
+    ├── core/                   # strona główna, pulpit, 404, templatetags/
+    ├── accounts/               # Profile, rejestracja, profil, signals.py (Observer)
+    ├── decks/                  # Deck, Card, CRUD, mixins.py (uprawnienia)
+    │   ├── data/kana.py        # tablice hiragany i katakany
     │   └── management/commands/load_data.py
     ├── study/
-    │   └── srs.py           # algorytm SM-2
-    ├── stats/
-    ├── core/
-    ├── templates/
-    └── static/              # CSS (paleta, motywy), JS, logo
+    │   ├── srs.py              # algorytmy powtórek (Strategy)
+    │   ├── services.py         # kolejka, zapis oceny, statystyki (Service Layer)
+    │   └── views.py            # sesja nauki
+    ├── api/                    # DRF: serializers, permissions, views, urls
+    ├── templates/              # base.html + szablony stron
+    └── static/                 # css/theme.css (paleta, motywy), js/
 ```
 
 ---
@@ -133,16 +139,17 @@ Karty są wspólne, a postęp jest prywatny: ta sama karta systemowa ma osobny `
 
 Wariant algorytmu SuperMemo SM-2 z czterema ocenami:
 
-| Ocena | Efekt |
-|---|---|
-| **Znów** | `repetitions = 0`, karta wraca w tej samej sesji, `lapses + 1`, `ease − 0,20` |
-| **Trudne** | interwał × 1,2, `ease − 0,15` |
-| **Dobre** | interwał × `ease` |
-| **Łatwe** | interwał × `ease` × 1,3, `ease + 0,15` |
+| Ocena | 1. odpowiedź | 2. odpowiedź | Kolejne | `ease` |
+|---|---|---|---|---|
+| **Znów** | karta wraca po 10 min, postęp od zera, `lapses + 1` | jw. | jw. | −0,20 |
+| **Trudne** | 1 dzień | 4 dni | interwał × 1,2 | −0,15 |
+| **Dobre** | 1 dzień | 6 dni | interwał × `ease` | bez zmian |
+| **Łatwe** | 3 dni | 8 dni | interwał × `ease` × 1,3 | +0,15 |
 
-- Pierwsze poprawne odpowiedzi: 1 dzień → 6 dni → dalej mnożenie przez `ease`.
-- Początkowy `ease` = 2,5, minimalny = 1,3.
-- Kolejka dnia: najpierw zaległe powtórki (`due_at ≤ teraz`), potem nowe karty do dziennego limitu z profilu.
+- Początkowy `ease` = 2,5, minimalny = 1,3; poprawna odpowiedź nigdy nie daje interwału krótszego niż 1 dzień.
+- Kolejka: najpierw zaległe powtórki (`due_at ≤ teraz`), potem nowe karty do dziennego limitu z profilu.
+- Karta jest uznawana za opanowaną przy interwale ≥ 21 dni.
+- Alternatywnie dostępny jest system pudełek Leitnera (`SRS_ALGORITHM = "leitner"` w `settings.py`).
 
 Logika znajduje się w module `study/srs.py` jako czyste funkcje, więc da się ją testować jednostkowo, niezależnie od bazy i widoków.
 
@@ -163,6 +170,7 @@ Znaczenia w źródłach są po angielsku. Dla kart N5 planowane są polskie tłu
 ## Identyfikacja wizualna
 
 - **Logo:** 日本語 (*nihongo*) + „SRS” w kolorze akcentu; wersja pozioma (pasek nawigacji) i kwadratowa (favicon), format SVG.
+- **Favicon** ✅: znak 日 (pierwszy znak słowa 日本語) na tle indygo, środkowa kreska w kolorze cynobru; `static/img/favicon.svg` + `favicon.ico` (16/32/48 px) + `apple-touch-icon.png` (180 px). Znak narysowany kształtami, więc nie zależy od fontów systemu.
 - **Kolejność prac:** najpierw paleta kolorów aplikacji (zmienne CSS), logo projektowane na końcu w kolorach przewodnich.
 - **Motyw jasny i ciemny** z przełącznikiem; wybór zapamiętywany w przeglądarce.
 
@@ -174,6 +182,49 @@ Propozycja palety (do zatwierdzenia):
 | Akcent | cynober `#d1495b` | *shu-iro*, kolor bram torii |
 | Tło jasne | `#faf7f2` | papier washi |
 | Tło ciemne | `#1b1d21` | tusz *sumi* |
+
+---
+
+## Wzorce projektowe
+
+| Wzorzec | Gdzie | Po co |
+|---|---|---|
+| **Strategia** (Strategy) | `study/srs.py`: interfejs `SchedulingStrategy`, implementacje `SM2Strategy` i `LeitnerStrategy`, wybór przez `get_strategy()` | algorytm powtórek można wymienić jednym ustawieniem, bez zmian w widokach, API i serwisach |
+| **Warstwa serwisów** (Service Layer) | `study/services.py` | ta sama logika (kolejka, limity, zapis oceny, statystyki) obsługuje widoki HTML i REST API, bez duplikacji |
+| **Obserwator** (Observer) | `accounts/signals.py`: sygnał `post_save` | automatyczne utworzenie profilu dla każdego nowego użytkownika, niezależnie od tego, czy konto powstało przez stronę, API czy panel admina |
+| **Metoda szablonowa** (Template Method) | widoki klasowe (`CreateView`, `UpdateView`, `DeleteView`) | szkielet obsługi żądania jest w klasie bazowej Django, a widoki nadpisują tylko wybrane kroki (`get_queryset`, `form_valid`, `get_success_url`) |
+| **Domieszki** (Mixins) | `decks/mixins.py`, `LoginRequiredMixin` | wielokrotnego użytku reguły dostępu: edytować można tylko własne talie i karty |
+
+Planowane w M2: **Adapter** (importery CSV i słowników do wspólnego formatu kart) oraz **Metoda wytwórcza** (tworzenie kart zależnie od typu talii).
+
+---
+
+## REST API (Swagger + JWT)
+
+Dokumentacja interaktywna: **`/api/docs/`** (Swagger UI) · alternatywnie `/api/redoc/` · schemat OpenAPI: `/api/schema/`
+
+**Jak zalogować się w Swaggerze:**
+
+1. Otwórz `/api/docs/` → `POST /api/auth/token/` → *Try it out* → podaj `username` i `password` → *Execute*.
+2. Skopiuj wartość `access` z odpowiedzi.
+3. Kliknij **Authorize** (kłódka u góry), wklej token i zatwierdź. Od teraz wszystkie żądania idą z nagłówkiem `Authorization: Bearer <token>`.
+4. Token `access` jest ważny 60 minut; nowy pobierzesz z `refresh` przez `POST /api/auth/token/refresh/` (ważny 7 dni).
+
+Zalogowany w przeglądarce użytkownik może korzystać ze Swaggera także bez tokenu (sesja Django).
+
+| Metoda | Endpoint | Opis |
+|---|---|---|
+| POST | `/api/auth/register/` | rejestracja (bez uwierzytelnienia) |
+| POST | `/api/auth/token/` | logowanie → tokeny `access` i `refresh` |
+| POST | `/api/auth/token/refresh/` | nowy token `access` |
+| GET, POST | `/api/decks/` | lista talii (systemowe + własne), utworzenie własnej |
+| GET, PUT, PATCH, DELETE | `/api/decks/{id}/` | szczegóły; zmiany tylko we własnych taliach |
+| GET | `/api/decks/{id}/cards/` | karty w talii |
+| GET, POST | `/api/cards/` | lista kart, dodanie karty do własnej talii |
+| GET, PUT, PATCH, DELETE | `/api/cards/{id}/` | szczegóły; zmiany tylko we własnych taliach |
+| GET | `/api/study/queue/?deck=&limit=` | kolejka nauki |
+| POST | `/api/study/review/` | zapis oceny `{card, rating (0–3), response_ms}` → nowy stan karty |
+| GET | `/api/stats/summary/` | podsumowanie: do powtórki, nowe, seria, skuteczność, cel dzienny |
 
 ---
 
@@ -191,12 +242,12 @@ py -m venv .venv
 python -m pip install -r nihongo_srs\requirements.txt
 cd nihongo_srs
 python manage.py migrate
-python manage.py load_data            # kana + słownictwo i kanji N5–N4
+python manage.py load_data            # talie systemowe (obecnie: hiragana i katakana)
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Aplikacja: http://127.0.0.1:8000/ · panel admina: http://127.0.0.1:8000/admin/
+Aplikacja: http://127.0.0.1:8000/ · panel admina: http://127.0.0.1:8000/admin/ · API: http://127.0.0.1:8000/api/docs/
 
 Jeśli Windows zgłasza „You don't have permission to access that port”, uruchom serwer na innym porcie, np. `python manage.py runserver 8765`.
 
@@ -209,13 +260,14 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Planowane obszary testów:
+Obecnie **45 testów**:
 
-- algorytm SM-2: wszystkie oceny, granice `ease`, kolejne interwały
-- budowa kolejki: zaległe karty, dzienny limit nowych kart
-- sesja nauki: zapis oceny, aktualizacja `ReviewState` i `ReviewLog`
-- uprawnienia: brak dostępu do cudzych talii, talie systemowe tylko do odczytu
-- import CSV: poprawne dane i raport błędów
+| Plik | Zakres |
+|---|---|
+| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit, kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
+| `decks/tests.py` | komenda `load_data` (liczba talii i kart, idempotentność), uprawnienia (cudze talie → 404, systemowe tylko do odczytu), tworzenie talii i kart, unikalne nazwy, filtry |
+| `accounts/tests.py` | rejestracja z automatycznym logowaniem i profilem, unikalny e-mail, edycja profilu, strony publiczne, strona 404, favicon |
+| `api/tests.py` | wymagane uwierzytelnienie, JWT (poprawne i błędne hasło), rejestracja, ukrywanie cudzych talii, talie systemowe tylko do odczytu, CRUD własnych talii i kart, kolejka i ocena, 404 dla niewidocznej karty, podsumowanie, dostępność Swaggera |
 
 ---
 
@@ -257,9 +309,9 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | Kamień milowy | Termin | Zakres | Status |
 |---|---|---|---|
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
-| **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, działająca sesja SM-2, paleta i motyw ciemny | ⏳ |
-| **M2: Treść i statystyki** | 28.11 | słownictwo i kanji N5–N4, własne talie, import CSV, statystyki | ⏳ |
-| **M3: Dopracowanie** | 12.12 | UI, logo, testy, dokumentacja projektu, wdrożenie na PythonAnywhere | ⏳ |
+| **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
+| **M2: Treść i statystyki** | 28.11 | słownictwo i kanji N5–N4, import CSV (Adapter), statystyki z wykresami | ⏳ |
+| **M3: Dopracowanie** | 12.12 | UI, logo, dokumentacja projektu, wdrożenie na PythonAnywhere | ⏳ |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:

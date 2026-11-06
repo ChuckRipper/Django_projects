@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Pulpit – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <h1 class="h3 mb-0">おかえり, {{ user.username }}!</h1>
+  <a href="{% url 'study' %}" class="btn btn-primary btn-lg {% if not summary.due_now and not summary.new_available %}disabled{% endif %}">
+    <i class="bi bi-lightning-charge"></i> Rozpocznij naukę
+  </a>
+</div>
+<div class="row g-3">
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Do powtórki teraz</div>
+    <div class="stat-value">{{ summary.due_now }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Nowe karty dziś</div>
+    <div class="stat-value">{{ summary.new_available }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Seria dni nauki</div>
+    <div class="stat-value">{{ summary.streak_days }} <span class="fs-6 text-accent"><i class="bi bi-fire"></i></span></div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <div class="text-body-secondary small">Skuteczność</div>
+    <div class="stat-value">{% if summary.accuracy_percent is None %}—{% else %}{{ summary.accuracy_percent }}%{% endif %}</div>
+  </div></div></div>
+</div>
+<div class="card shadow-sm mt-3"><div class="card-body">
+  <div class="d-flex justify-content-between small mb-1">
+    <span>Cel dzienny: {{ summary.reviews_today }} / {{ summary.daily_goal }} powtórek</span>
+    <a href="{% url 'profile' %}" class="link-secondary">zmień</a>
+  </div>
+  <div class="progress" role="progressbar" aria-valuenow="{{ summary.goal_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar" style="width: {{ summary.goal_percent }}%"></div>
+  </div>
+</div></div>
+{% endblock %}

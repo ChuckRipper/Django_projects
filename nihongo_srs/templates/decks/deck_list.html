@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Talie – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Talie <span class="badge bg-secondary">{{ decks|length }}</span></h1>
+  <a href="{% url 'deck_create' %}" class="btn btn-accent"><i class="bi bi-plus-lg"></i> Nowa talia</a>
+</div>
+<form class="row g-2 mb-4" method="get">
+  <div class="col-md-5"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Szukaj talii"></div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="kind">
+      <option value="">Wszystkie typy</option>
+      {% for value, label in kinds %}<option value="{{ value }}" {% if value == kind %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="level">
+      <option value="">Każdy poziom</option>
+      {% for value, label in levels %}<option value="{{ value }}" {% if value == level %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-grid"><button class="btn btn-outline-primary"><i class="bi bi-funnel"></i> Filtruj</button></div>
+</form>
+<div class="row g-3">
+  {% for deck in decks %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h2 class="h5 mb-0"><a href="{% url 'deck_detail' deck.pk %}" class="text-decoration-none">{{ deck.name }}</a></h2>
+          {% if deck.is_system %}<span class="badge text-bg-secondary">systemowa</span>{% else %}<span class="badge text-bg-info">własna</span>{% endif %}
+        </div>
+        <p class="small text-body-secondary mb-2">{{ deck.get_kind_display }}{% if deck.jlpt_level %} · {{ deck.jlpt_level }}{% endif %} · {{ deck.card_count }} kart</p>
+        <div class="progress mb-2" style="height: 6px" title="Rozpoczęte: {{ deck.started_count }} z {{ deck.card_count }}">
+          <div class="progress-bar" style="width: {% widthratio deck.started_count deck.card_count|default:1 100 %}%"></div>
+        </div>
+        <p class="small mb-0">Rozpoczęte {{ deck.started_count }}/{{ deck.card_count }}{% if deck.due_count %} · <span class="text-accent fw-semibold">do powtórki: {{ deck.due_count }}</span>{% endif %}</p>
+      </div>
+      <div class="card-footer bg-transparent">
+        <a href="{% url 'study_deck' deck.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-lightning-charge"></i> Ucz się</a>
+        <a href="{% url 'deck_detail' deck.pk %}" class="btn btn-sm btn-outline-secondary">Karty</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p class="text-body-secondary">Brak talii spełniających kryteria.</p>
+  {% endfor %}
+</div>
+{% endblock %}
