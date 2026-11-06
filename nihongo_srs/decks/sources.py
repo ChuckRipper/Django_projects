@@ -31,6 +31,7 @@ class CardData:
     kunyomi: str = ""
     stroke_count: int | None = None
     meaning_en: str = ""
+    line: int | None = None  # line in the source file, for error messages
 
 
 @dataclass
@@ -138,7 +139,7 @@ class CsvCardSource(CardSource):
             yield CardData(
                 front=front, back=back, reading=cell("reading"), example=cell("example"),
                 onyomi=cell("onyomi"), kunyomi=cell("kunyomi"),
-                stroke_count=int(strokes) if strokes else None, meaning_en=cell("meaning_en"),
+                stroke_count=int(strokes) if strokes else None, meaning_en=cell("meaning_en"), line=line_no,
             )
 
 
@@ -215,7 +216,7 @@ class JlptVocabSource(CardSource):
                 expression, reading = row["expression"].strip(), row["reading"].strip()
                 meaning_en = row["meaning"].strip()
                 meaning = polish.get((expression, reading)) or meaning_en
-                forms = [form.strip() for form in expression.split(";") if form.strip()]
+                forms = [form.strip() for form in re.split(r"[;、]", expression) if form.strip()]
                 front = forms[0]
                 alternatives = "、".join(forms[1:])
                 reading = self._clean_reading(reading)

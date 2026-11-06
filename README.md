@@ -52,7 +52,6 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 - tryb „wpisz odpowiedź” z konwersją romaji → kana w trakcie pisania
 - animowana kolejność kresek kanji
 - udostępnianie własnych talii innym użytkownikom
-- polskie znaczenia słownictwa N4
 - reset hasła e-mailem
 
 ### Materiał na start
@@ -64,7 +63,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Kanji N5 | 79 znaków, znaczenia po polsku (+ angielskie), odczyty on/kun, kreski, przykładowe słówka |
 | Kanji N4 | 166 znaków, jw. |
 | Słownictwo N5 | 709 słów, znaczenia po polsku (+ angielskie) |
-| Słownictwo N4 | 666 słów, znaczenia po angielsku |
+| Słownictwo N4 | 666 słów, znaczenia po polsku (+ angielskie) |
 
 Razem: 10 talii systemowych, 1828 kart.
 
@@ -172,7 +171,7 @@ Logika znajduje się w module `study/srs.py` jako czyste funkcje, więc da się 
 | Kana | generowane w kodzie (`decks/data/kana.py`) | – |
 | [davidluzgouveia/kanji-data](https://github.com/davidluzgouveia/kanji-data), na podstawie KANJIDIC (EDRDG) i list JLPT Jonathana Wallera | kanji N5–N4: znaczenia, odczyty, liczba kresek, poziom | MIT; KANJIDIC: CC BY-SA 4.0 |
 | [jamsinclair/open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks), na podstawie list Jonathana Wallera | słownictwo N5–N4 | MIT |
-| Tłumaczenia na polski | 245 kanji i 709 słówek N5, przygotowane na potrzeby projektu | MIT |
+| Tłumaczenia na polski | 245 kanji oraz 709 słówek N5 i 666 słówek N4, przygotowane na potrzeby projektu | MIT |
 
 Pliki źródłowe leżą w `decks/data/`, a szczegóły opisuje `decks/data/SOURCES.md`. Atrybucja jest wyświetlana w stopce aplikacji.
 
@@ -275,13 +274,13 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **73 testy**:
+Obecnie **74 testy**:
 
 | Plik | Zakres |
 |---|---|
 | `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
-| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
-| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, 500, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter |
+| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
+| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, 500, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
 
@@ -369,7 +368,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strona 500, ✅ ustawienia produkcyjne, ✅ widok mobilny; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere, ⏳ scenariusz testów manualnych | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strona 500, ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:

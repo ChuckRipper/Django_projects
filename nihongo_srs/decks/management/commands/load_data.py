@@ -56,7 +56,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  {deck.name}: nowe {created}")
 
         vocab_n5 = JlptVocabSource(DATA_DIR / "jlpt_vocab_n5.csv", DATA_DIR / "vocab_n5_pl.tsv")
-        vocab_n4 = JlptVocabSource(DATA_DIR / "jlpt_vocab_n4.csv")
+        vocab_n4 = JlptVocabSource(DATA_DIR / "jlpt_vocab_n4.csv", DATA_DIR / "vocab_n4_pl.tsv")
         examples = kanji_examples([vocab_n5, vocab_n4])
 
         for level, number in (("N5", 5), ("N4", 4)):
@@ -68,14 +68,11 @@ class Command(BaseCommand):
             source = KanjiDataSource(DATA_DIR / "kanji_n5_n4.json", number, DATA_DIR / "kanji_pl.tsv", examples)
             self.report(deck, import_cards(deck, source))
 
-        for level, source, note in (
-            ("N5", vocab_n5, "Znaczenia po polsku."),
-            ("N4", vocab_n4, "Znaczenia na razie po angielsku."),
-        ):
+        for level, source in (("N5", vocab_n5), ("N4", vocab_n4)):
             order += 1
             deck = self.deck(
                 f"Słownictwo {level}", Deck.Kind.VOCABULARY, order,
-                f"Słownictwo z poziomu JLPT {level}. {note}", level,
+                f"Słownictwo z poziomu JLPT {level}, znaczenia po polsku.", level,
             )
             self.report(deck, import_cards(deck, source))
 

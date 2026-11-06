@@ -36,11 +36,11 @@ def import_cards(deck: Deck, source: Iterable[CardData] | CardSource, update_exi
     next_order = max((card.order for card in existing.values()), default=0) + 1
     to_create = []
 
-    for line_no, data in enumerate(source, start=1):
+    for position, data in enumerate(source, start=1):
         try:
             card = factory.build(data)
         except ValidationError as exc:
-            report.errors.append(SourceError(line_no, "; ".join(exc.messages)))
+            report.errors.append(SourceError(data.line or position, "; ".join(exc.messages)))
             continue
         current = existing.get(card.front) or next((c for c in to_create if c.front == card.front), None)
         if current is not None:
@@ -58,7 +58,7 @@ def import_cards(deck: Deck, source: Iterable[CardData] | CardSource, update_exi
 
     Card.objects.bulk_create(to_create)
     report.created = len(to_create)
-    report.errors = list(getattr(source, "errors", [])) + report.errors
+    report.errors = sorted(list(getattr(source, "errors", [])) + report.errors, key=lambda error: error.line)
     return report
 
 

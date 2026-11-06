@@ -188,6 +188,8 @@ class CardImportView(LoginRequiredMixin, FormView):
             messages.success(
                 self.request, f"Import zakończony: nowe karty {report.created}, zaktualizowane {report.updated}."
             )
+        elif not report.errors:
+            messages.info(self.request, f"Brak zmian: wszystkie karty już są w talii (pominięte: {report.skipped}).")
         if report.errors:
             return self.render_to_response(self.get_context_data(form=form, report=report))
         return redirect("deck_detail", pk=self.deck.pk)
