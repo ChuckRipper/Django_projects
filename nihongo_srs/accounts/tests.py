@@ -36,3 +36,24 @@ class AccountTests(TestCase):
         response = self.client.get("/favicon.ico")
         self.assertRedirects(response, "/static/img/favicon.ico", status_code=301, fetch_redirect_response=False)
         self.assertContains(self.client.get("/"), "img/favicon.svg")
+
+
+class CaseInsensitiveLoginTests(TestCase):
+    def setUp(self):
+        User.objects.create_user("Czarodziej", password="Sakura-2026!")
+
+    def test_login_ignores_letter_case(self):
+        for name in ("czarodziej", "CZARODZIEJ", "CzaroDziej"):
+            self.assertTrue(self.client.login(username=name, password="Sakura-2026!"), name)
+            self.client.logout()
+
+    def test_wrong_password_still_rejected(self):
+        self.assertFalse(self.client.login(username="czarodziej", password="zle-haslo"))
+
+    def test_registration_rejects_case_variant(self):
+        response = self.client.post(reverse("register"), {
+            "username": "czarodziej", "email": "c@example.com",
+            "password1": "Sakura-2026!", "password2": "Sakura-2026!",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors["username"])

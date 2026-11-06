@@ -62,6 +62,10 @@ class Card(models.Model):
     deck = models.ForeignKey(Deck, on_delete=models.CASCADE, related_name="cards", verbose_name="Talia")
     front = models.CharField("Przód", max_length=100)
     back = models.CharField("Tył (znaczenie)", max_length=255)
+    meaning_en = models.CharField(
+        "Znaczenie (ang.)", max_length=255, blank=True,
+        help_text="Oryginalne znaczenie ze słownika źródłowego.",
+    )
     reading = models.CharField("Odczyt", max_length=100, blank=True)
     example = models.CharField("Przykład", max_length=255, blank=True)
     onyomi = models.CharField("On'yomi", max_length=100, blank=True)

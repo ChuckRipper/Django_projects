@@ -128,3 +128,84 @@ body {
 .progress {
   --bs-progress-bar-bg: var(--ns-primary);
 }
+
+/* --- Charts and statistics ------------------------------------------------
+   Chart colours validated for colour-vision deficiencies (separate light/dark steps). */
+:root,
+[data-bs-theme="light"] {
+  --ns-chart-1: #2f6db3;
+  --ns-chart-2: #d1495b;
+  --ns-grid: #e6e2da;
+  --ns-hm-0: #ebe7df;
+  --ns-hm-1: #c6d6ea;
+  --ns-hm-2: #8fb0d9;
+  --ns-hm-3: #4f80bd;
+  --ns-hm-4: #1f3a5f;
+}
+
+[data-bs-theme="dark"] {
+  --ns-chart-1: #5285cc;
+  --ns-chart-2: #dc5a6c;
+  --ns-grid: #33373e;
+  --ns-hm-0: #2e3239;
+  --ns-hm-1: #2c4a6e;
+  --ns-hm-2: #3a6299;
+  --ns-hm-3: #5f92d4;
+  --ns-hm-4: #a9c6ee;
+}
+
+.chart-box {
+  position: relative;
+  height: 260px;
+}
+
+.heatmap-wrap {
+  overflow-x: auto;
+}
+
+.heatmap {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.heatmap-col,
+.heatmap-days {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-days span {
+  height: 14px;
+  font-size: 0.65rem;
+  line-height: 14px;
+  color: var(--ns-muted);
+  padding-right: 4px;
+}
+
+.hm {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--ns-hm-0);
+}
+
+.hm-1 { background: var(--ns-hm-1); }
+.hm-2 { background: var(--ns-hm-2); }
+.hm-3 { background: var(--ns-hm-3); }
+.hm-4 { background: var(--ns-hm-4); }
+.hm-empty { background: transparent; }
+
+.bar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ns-hm-0);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--ns-chart-1);
+}

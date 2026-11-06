@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -73,3 +74,29 @@ class ApiTests(APITestCase):
     def test_swagger_and_schema_available(self):
         self.assertEqual(self.client.get("/api/schema/").status_code, 200)
         self.assertEqual(self.client.get("/api/docs/").status_code, 200)
+
+    def test_token_login_is_case_insensitive(self):
+        response = self.client.post(reverse("token_obtain_pair"), {"username": "ANIA", "password": "Haslo-12345"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_import_and_export(self):
+        self.authenticate()
+        deck = self.client.post("/api/decks/", {"name": "Moja", "kind": "vocabulary"}).data
+        upload = SimpleUploadedFile("k.csv", "front,back,reading\n猫,kot,ねこ\n".encode())
+        response = self.client.post(f"/api/decks/{deck['id']}/import/", {"file": upload}, format="multipart")
+        self.assertEqual((response.status_code, response.data["created"]), (200, 1))
+        export = self.client.get(f"/api/decks/{deck['id']}/export/")
+        self.assertIn("猫,kot,ねこ", export.content.decode())
+
+    def test_import_into_system_deck_forbidden(self):
+        self.authenticate()
+        upload = SimpleUploadedFile("k.csv", b"front,back\nx,y\n")
+        response = self.client.post(f"/api/decks/{self.system.pk}/import/", {"file": upload}, format="multipart")
+        self.assertEqual(response.status_code, 403)
+
+    def test_daily_stats(self):
+        self.authenticate()
+        self.client.post("/api/study/review/", {"card": self.card.pk, "rating": 0})
+        data = self.client.get("/api/stats/daily/?days=7").data
+        self.assertEqual(len(data), 7)
+        self.assertEqual(data[-1]["again"], 1)

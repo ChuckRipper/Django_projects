@@ -5,7 +5,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 > Projekt zaliczeniowy z przedmiotu *Aplikacje internetowe w Django* (mgr inż. Marek Foryś), WSB Merito Chorzów, Informatyka II stopnia, specjalność Programista Python.
 > Autor: Cezary Kalinowski
 
-**Status:** 🚧 w budowie. Etap M1 (fundament) gotowy, patrz [Plan prac](#plan-prac).
+**Status:** 🚧 w budowie. Etapy M1 (fundament) i M2 (treść i statystyki) gotowe, patrz [Plan prac](#plan-prac).
 
 ---
 
@@ -35,12 +35,12 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 
 | Moduł | Funkcje |
 |---|---|
-| **Konta** | rejestracja, logowanie, wylogowanie; profil z dziennym limitem nowych kart i celem dziennym |
+| **Konta** | rejestracja, logowanie (login bez rozróżniania wielkości liter), wylogowanie; profil z dziennym limitem nowych kart i celem dziennym |
 | **Talie i karty** | talie systemowe (tylko do odczytu) i własne talie użytkownika; pełny CRUD talii i kart; wyszukiwanie oraz filtry po typie i poziomie JLPT |
 | **Nauka** | sesja powtórek: kolejka (zaległe powtórki + nowe karty do dziennego limitu) → przód karty → odsłonięcie odpowiedzi → ocena **Znów / Trudne / Dobre / Łatwe** → wyliczenie następnego terminu |
 | **Kanji** | znaczenie, odczyty on'yomi i kun'yomi, liczba kresek, poziom JLPT, przykładowe słówka |
-| **Statystyki** | karty do powtórki dziś, seria dni nauki, skuteczność, karty wg etapu (nowe / w nauce / opanowane), wykres powtórek z ostatnich 30 dni |
-| **Import** | wczytywanie talii z pliku CSV z walidacją i raportem błędów |
+| **Statystyki** | wykres powtórek z 30 dni (poprawne / „Znów”), heatmapa aktywności z 20 tygodni, rozkład ocen, nadchodzące powtórki na 7 dni, skuteczność i średni czas odpowiedzi w każdej talii |
+| **Import i eksport** | wczytywanie kart z pliku CSV (polskie lub angielskie nagłówki, automatyczny separator, raport błędów z numerami wierszy), eksport talii do CSV w tym samym formacie |
 | **Panel admina** | zarządzanie taliami systemowymi i kartami, podgląd historii powtórek |
 | **Interfejs** | po polsku, responsywny, motyw jasny i ciemny z przełącznikiem, własna strona 404, skróty klawiszowe w nauce |
 | **REST API** | uwierzytelnianie JWT, talie, karty, kolejka nauki, zapis oceny, statystyki; dokumentacja Swagger UI generowana automatycznie |
@@ -49,8 +49,8 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 
 - tryb „wpisz odpowiedź” z konwersją romaji → kana w trakcie pisania
 - animowana kolejność kresek kanji
-- heatmapa aktywności w stylu GitHuba
-- eksport talii do CSV i udostępnianie własnych talii innym użytkownikom
+- udostępnianie własnych talii innym użytkownikom
+- polskie znaczenia słownictwa N4
 - reset hasła e-mailem
 
 ### Materiał na start
@@ -59,8 +59,12 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 |---|---|
 | Hiragana | 46 znaków podstawowych + dakuten / handakuten + połączenia (yōon) |
 | Katakana | jak wyżej |
-| JLPT N5 | ok. 80 kanji, ok. 700 słówek |
-| JLPT N4 | ok. 170 kanji, ok. 650 słówek |
+| Kanji N5 | 79 znaków, znaczenia po polsku (+ angielskie), odczyty on/kun, kreski, przykładowe słówka |
+| Kanji N4 | 166 znaków, jw. |
+| Słownictwo N5 | 709 słów, znaczenia po polsku (+ angielskie) |
+| Słownictwo N4 | 666 słów, znaczenia po angielsku |
+
+Razem: 10 talii systemowych, 1828 kart.
 
 ---
 
@@ -92,7 +96,7 @@ Projekt Django (`config/`) podzielony na aplikacje o jednej odpowiedzialności:
 | `study` | algorytm SM-2 (`srs.py`, czysta logika bez zależności od widoków), budowa kolejki, sesja nauki |
 | `api` | REST API: serializery, uprawnienia, widoki DRF, routing, Swagger |
 | `core` | strona główna i pulpit, strona 404, tag szablonu do formularzy Bootstrap |
-| `stats` *(M2)* | rozbudowane statystyki i wykresy na podstawie historii powtórek |
+| `stats` | statystyki i wykresy na podstawie historii powtórek (agregacje w `stats/services.py`) |
 
 ### Planowana struktura repozytorium
 
@@ -108,8 +112,12 @@ Django_projects/
     ├── core/                   # strona główna, pulpit, 404, templatetags/
     ├── accounts/               # Profile, rejestracja, profil, signals.py (Observer)
     ├── decks/                  # Deck, Card, CRUD, mixins.py (uprawnienia)
-    │   ├── data/kana.py        # tablice hiragany i katakany
+    │   ├── sources.py          # adaptery źródeł kart (Adapter)
+    │   ├── factories.py        # tworzenie kart wg typu talii (Metoda wytwórcza)
+    │   ├── services.py         # import i eksport CSV
+    │   ├── data/               # kana.py, kanji i słownictwo N5–N4, tłumaczenia, SOURCES.md
     │   └── management/commands/load_data.py
+    ├── stats/                  # statystyki: services.py, widok, szablon
     ├── study/
     │   ├── srs.py              # algorytmy powtórek (Strategy)
     │   ├── services.py         # kolejka, zapis oceny, statystyki (Service Layer)
@@ -126,7 +134,7 @@ Django_projects/
 | Model | Najważniejsze pola | Uwagi |
 |---|---|---|
 | `Deck` | `name`, `description`, `kind` (kana / vocabulary / kanji), `jlpt_level`, `owner`, `created_at` | `owner = NULL` → talia systemowa |
-| `Card` | `deck`, `front`, `back`, `reading`, `example`, `onyomi`, `kunyomi`, `stroke_count`, `order` | pola kanji wypełniane tylko dla kart kanji |
+| `Card` | `deck`, `front`, `back`, `meaning_en`, `reading`, `example`, `onyomi`, `kunyomi`, `stroke_count`, `order` | pola kanji wypełniane tylko dla kart kanji; `meaning_en` – oryginalne znaczenie ze słownika |
 | `ReviewState` | `user`, `card`, `ease_factor`, `interval_days`, `repetitions`, `lapses`, `due_at`, `introduced_at` | unikalna para `user` + `card`; stan nauki konkretnej osoby |
 | `ReviewLog` | `user`, `card`, `rating`, `reviewed_at`, `response_ms`, `interval_before`, `interval_after` | pełna historia, źródło statystyk |
 | `Profile` | `user` (1:1), `new_cards_per_day`, `daily_goal` | ustawienia nauki |
@@ -159,11 +167,12 @@ Logika znajduje się w module `study/srs.py` jako czyste funkcje, więc da się 
 
 | Źródło | Wykorzystanie | Licencja |
 |---|---|---|
-| Kana | generowane w kodzie | – |
-| JMdict / KANJIDIC2 (Electronic Dictionary Research and Development Group) | znaczenia, odczyty, liczba kresek | CC BY-SA 4.0, atrybucja wyświetlana w aplikacji |
-| Listy JLPT N5/N4 | przypisanie poziomów | listy społecznościowe (oficjalne listy nie istnieją); licencja do potwierdzenia przed użyciem |
+| Kana | generowane w kodzie (`decks/data/kana.py`) | – |
+| [davidluzgouveia/kanji-data](https://github.com/davidluzgouveia/kanji-data), na podstawie KANJIDIC (EDRDG) i list JLPT Jonathana Wallera | kanji N5–N4: znaczenia, odczyty, liczba kresek, poziom | MIT; KANJIDIC: CC BY-SA 4.0 |
+| [jamsinclair/open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks), na podstawie list Jonathana Wallera | słownictwo N5–N4 | MIT |
+| Tłumaczenia na polski | 245 kanji i 709 słówek N5, przygotowane na potrzeby projektu | MIT |
 
-Znaczenia w źródłach są po angielsku. Dla kart N5 planowane są polskie tłumaczenia.
+Pliki źródłowe leżą w `decks/data/`, a szczegóły opisuje `decks/data/SOURCES.md`. Atrybucja jest wyświetlana w stopce aplikacji.
 
 ---
 
@@ -173,6 +182,7 @@ Znaczenia w źródłach są po angielsku. Dla kart N5 planowane są polskie tłu
 - **Favicon** ✅: znak 日 (pierwszy znak słowa 日本語) na tle indygo, środkowa kreska w kolorze cynobru; `static/img/favicon.svg` + `favicon.ico` (16/32/48 px) + `apple-touch-icon.png` (180 px). Znak narysowany kształtami, więc nie zależy od fontów systemu.
 - **Kolejność prac:** najpierw paleta kolorów aplikacji (zmienne CSS), logo projektowane na końcu w kolorach przewodnich.
 - **Motyw jasny i ciemny** z przełącznikiem; wybór zapamiętywany w przeglądarce.
+- **Kolory wykresów** (poprawne `#2f6db3` / „Znów” `#d1495b`, w trybie ciemnym `#5285cc` / `#dc5a6c`) sprawdzone walidatorem palety pod kątem daltonizmu i kontrastu. Heatmapa używa jednej barwy (indygo) w pięciu stopniach jasności. Każdy wykres ma legendę i widok tabeli.
 
 Propozycja palety (do zatwierdzenia):
 
@@ -194,8 +204,8 @@ Propozycja palety (do zatwierdzenia):
 | **Obserwator** (Observer) | `accounts/signals.py`: sygnał `post_save` | automatyczne utworzenie profilu dla każdego nowego użytkownika, niezależnie od tego, czy konto powstało przez stronę, API czy panel admina |
 | **Metoda szablonowa** (Template Method) | widoki klasowe (`CreateView`, `UpdateView`, `DeleteView`) | szkielet obsługi żądania jest w klasie bazowej Django, a widoki nadpisują tylko wybrane kroki (`get_queryset`, `form_valid`, `get_success_url`) |
 | **Domieszki** (Mixins) | `decks/mixins.py`, `LoginRequiredMixin` | wielokrotnego użytku reguły dostępu: edytować można tylko własne talie i karty |
-
-Planowane w M2: **Adapter** (importery CSV i słowników do wspólnego formatu kart) oraz **Metoda wytwórcza** (tworzenie kart zależnie od typu talii).
+| **Adapter** | `decks/sources.py`: `CsvCardSource`, `KanjiDataSource`, `JlptVocabSource` → wspólny interfejs `CardSource` zwracający `CardData` | trzy różne formaty (plik użytkownika, JSON z KANJIDIC, listy JLPT) trafiają do jednej funkcji importu; nowy format to jedna nowa klasa |
+| **Metoda wytwórcza** (Factory Method) | `decks/factories.py`: `CardFactory.for_deck()` → `KanaCardFactory`, `VocabularyCardFactory`, `KanjiCardFactory` | każdy typ talii ma własne reguły pól i walidacji (np. karta kanji to dokładnie jeden znak); import nie musi sprawdzać typu talii |
 
 ---
 
@@ -220,11 +230,14 @@ Zalogowany w przeglądarce użytkownik może korzystać ze Swaggera także bez t
 | GET, POST | `/api/decks/` | lista talii (systemowe + własne), utworzenie własnej |
 | GET, PUT, PATCH, DELETE | `/api/decks/{id}/` | szczegóły; zmiany tylko we własnych taliach |
 | GET | `/api/decks/{id}/cards/` | karty w talii |
+| POST | `/api/decks/{id}/import/` | import kart z CSV (`multipart/form-data`: `file`, `update_existing`) → raport |
+| GET | `/api/decks/{id}/export/` | eksport talii do CSV |
 | GET, POST | `/api/cards/` | lista kart, dodanie karty do własnej talii |
 | GET, PUT, PATCH, DELETE | `/api/cards/{id}/` | szczegóły; zmiany tylko we własnych taliach |
 | GET | `/api/study/queue/?deck=&limit=` | kolejka nauki |
 | POST | `/api/study/review/` | zapis oceny `{card, rating (0–3), response_ms}` → nowy stan karty |
 | GET | `/api/stats/summary/` | podsumowanie: do powtórki, nowe, seria, skuteczność, cel dzienny |
+| GET | `/api/stats/daily/?days=` | powtórki dziennie (poprawne / „Znów”) |
 
 ---
 
@@ -242,7 +255,7 @@ py -m venv .venv
 python -m pip install -r nihongo_srs\requirements.txt
 cd nihongo_srs
 python manage.py migrate
-python manage.py load_data            # talie systemowe (obecnie: hiragana i katakana)
+python manage.py load_data            # 10 talii systemowych: kana, kanji i słownictwo N5–N4
 python manage.py createsuperuser
 python manage.py runserver
 ```
@@ -260,14 +273,15 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **45 testów**:
+Obecnie **70 testów**:
 
 | Plik | Zakres |
 |---|---|
 | `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit, kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
-| `decks/tests.py` | komenda `load_data` (liczba talii i kart, idempotentność), uprawnienia (cudze talie → 404, systemowe tylko do odczytu), tworzenie talii i kart, unikalne nazwy, filtry |
-| `accounts/tests.py` | rejestracja z automatycznym logowaniem i profilem, unikalny e-mail, edycja profilu, strony publiczne, strona 404, favicon |
-| `api/tests.py` | wymagane uwierzytelnienie, JWT (poprawne i błędne hasło), rejestracja, ukrywanie cudzych talii, talie systemowe tylko do odczytu, CRUD własnych talii i kart, kolejka i ocena, 404 dla niewidocznej karty, podsumowanie, dostępność Swaggera |
+| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
+| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter |
+| `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
+| `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
 
 ---
 
@@ -310,14 +324,14 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 |---|---|---|---|
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
-| **M2: Treść i statystyki** | 28.11 | słownictwo i kanji N5–N4, import CSV (Adapter), statystyki z wykresami | ⏳ |
+| **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
 | **M3: Dopracowanie** | 12.12 | UI, logo, dokumentacja projektu, wdrożenie na PythonAnywhere | ⏳ |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:
 
 - [ ] zatwierdzenie palety kolorów
-- [ ] potwierdzenie licencji list JLPT
+- [x] potwierdzenie licencji list JLPT (MIT, atrybucja w stopce i `SOURCES.md`)
 - [ ] termin wdrożenia na PythonAnywhere (konto współdzielone z zadaniami)
 
 ---

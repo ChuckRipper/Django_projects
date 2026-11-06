@@ -15,6 +15,7 @@
       <div id="answer" class="d-none mt-4">
         <hr>
         <div class="fs-3 fw-semibold">{{ card.back }}</div>
+        {% if card.meaning_en and card.meaning_en != card.back %}<div class="small text-body-secondary">{{ card.meaning_en }}</div>{% endif %}
         {% if card.reading %}<div class="jp fs-5 text-body-secondary">{{ card.reading }}</div>{% endif %}
         {% if card.onyomi or card.kunyomi %}
         <div class="small mt-2 jp">on: {{ card.onyomi|default:"—" }} · kun: {{ card.kunyomi|default:"—" }}{% if card.stroke_count %} · kreski: {{ card.stroke_count }}{% endif %}</div>

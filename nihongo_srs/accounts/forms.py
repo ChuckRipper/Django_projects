@@ -12,6 +12,12 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ("username", "email")
 
+    def clean_username(self):
+        username = super().clean_username()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Ta nazwa użytkownika jest już zajęta (wielkość liter nie ma znaczenia).")
+        return username
+
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email__iexact=email).exists():
