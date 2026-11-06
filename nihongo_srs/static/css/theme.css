@@ -1,0 +1,130 @@
+/* Nihongo SRS – palette and theme overrides on top of Bootstrap 5.3.
+   Primary: ai-iro (indigo), accent: shu-iro (vermilion of torii gates). */
+
+:root,
+[data-bs-theme="light"] {
+  --ns-primary: #1f3a5f;
+  --ns-primary-rgb: 31, 58, 95;
+  --ns-accent: #d1495b;
+  --ns-accent-rgb: 209, 73, 91;
+  --ns-bg: #faf7f2;
+  --ns-surface: #ffffff;
+  --ns-muted: #6b6f76;
+
+  --bs-primary: var(--ns-primary);
+  --bs-primary-rgb: var(--ns-primary-rgb);
+  --bs-body-bg: var(--ns-bg);
+  --bs-link-color: var(--ns-primary);
+  --bs-link-color-rgb: var(--ns-primary-rgb);
+  --bs-link-hover-color: var(--ns-accent);
+}
+
+[data-bs-theme="dark"] {
+  --ns-primary: #7ea6d9;
+  --ns-primary-rgb: 126, 166, 217;
+  --ns-accent: #ef6f7f;
+  --ns-accent-rgb: 239, 111, 127;
+  --ns-bg: #1b1d21;
+  --ns-surface: #24272d;
+  --ns-muted: #a3a8b0;
+
+  --bs-primary: var(--ns-primary);
+  --bs-primary-rgb: var(--ns-primary-rgb);
+  --bs-body-bg: var(--ns-bg);
+  --bs-link-color: var(--ns-primary);
+  --bs-link-color-rgb: var(--ns-primary-rgb);
+  --bs-link-hover-color: var(--ns-accent);
+}
+
+body {
+  font-family: "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-color: var(--ns-bg);
+}
+
+.jp {
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", sans-serif;
+}
+
+/* Navbar always uses the indigo brand colour */
+.ns-navbar {
+  background-color: #1f3a5f;
+}
+
+.ns-logo {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ns-logo .ns-logo-jp {
+  color: #ffffff;
+}
+
+.ns-logo .ns-logo-srs {
+  color: #ef6f7f;
+  margin-left: 0.25rem;
+}
+
+.card {
+  background-color: var(--ns-surface);
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--ns-primary);
+  --bs-btn-border-color: var(--ns-primary);
+  --bs-btn-hover-bg: var(--ns-accent);
+  --bs-btn-hover-border-color: var(--ns-accent);
+  --bs-btn-active-bg: var(--ns-accent);
+  --bs-btn-active-border-color: var(--ns-accent);
+}
+
+[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-color: #1b1d21;
+  --bs-btn-hover-color: #1b1d21;
+}
+
+.btn-accent {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--ns-accent);
+  --bs-btn-border-color: var(--ns-accent);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #b83a4b;
+  --bs-btn-hover-border-color: #b83a4b;
+}
+
+.text-accent {
+  color: var(--ns-accent) !important;
+}
+
+/* Study card */
+.study-card {
+  min-height: 320px;
+}
+
+.study-front {
+  font-size: clamp(3.5rem, 12vw, 7rem);
+  line-height: 1.1;
+}
+
+.study-front.long {
+  font-size: clamp(2rem, 7vw, 4rem);
+}
+
+.rating-btn {
+  min-width: 7.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ns-primary);
+}
+
+.hero-kanji {
+  font-size: clamp(4rem, 14vw, 8rem);
+  color: var(--ns-primary);
+  line-height: 1;
+}
+
+.progress {
+  --bs-progress-bar-bg: var(--ns-primary);
+}

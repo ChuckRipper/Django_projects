@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Rejestracja – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-3">Załóż konto</h1>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include '_form.html' %}
+      <button class="btn btn-primary w-100">Utwórz konto</button>
+    </form>
+    <p class="small text-center mt-3 mb-0">Masz już konto? <a href="{% url 'login' %}">Zaloguj się</a></p>
+  </div></div>
+</div></div>
+{% endblock %}

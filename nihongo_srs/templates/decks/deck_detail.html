@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ deck.name }} – Nihongo SRS{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{% url 'deck_list' %}">Talie</a></li>
+  <li class="breadcrumb-item active">{{ deck.name }}</li>
+</ol></nav>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ deck.name }}</h1>
+    <p class="text-body-secondary mb-0">{{ deck.get_kind_display }}{% if deck.jlpt_level %} · {{ deck.jlpt_level }}{% endif %}{% if deck.description %} · {{ deck.description }}{% endif %}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'study_deck' deck.pk %}" class="btn btn-primary"><i class="bi bi-lightning-charge"></i> Ucz się</a>
+    {% if can_edit %}
+    <a href="{% url 'card_create' deck.pk %}" class="btn btn-accent"><i class="bi bi-plus-lg"></i> Karta</a>
+    <a href="{% url 'deck_update' deck.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+    <a href="{% url 'deck_delete' deck.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+    {% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body py-2"><div class="small text-body-secondary">Nowe</div><div class="stat-value">{{ progress.new }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body py-2"><div class="small text-body-secondary">W nauce</div><div class="stat-value">{{ progress.learning }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body py-2"><div class="small text-body-secondary">Opanowane</div><div class="stat-value">{{ progress.mature }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body py-2"><div class="small text-body-secondary">Do powtórki</div><div class="stat-value text-accent">{{ progress.due }}</div></div></div></div>
+</div>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>#</th><th>Przód</th><th>Odpowiedź</th><th>Odczyt</th>{% if deck.kind == 'kanji' %}<th>On / Kun</th><th>Kreski</th>{% endif %}{% if can_edit %}<th class="text-end">Akcje</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for card in cards %}
+        <tr>
+          <td class="text-body-secondary">{{ forloop.counter }}</td>
+          <td class="jp fs-4">{{ card.front }}</td>
+          <td>{{ card.back }}</td>
+          <td class="jp">{{ card.reading|default:"—" }}</td>
+          {% if deck.kind == 'kanji' %}<td class="jp small">{{ card.onyomi|default:"—" }} / {{ card.kunyomi|default:"—" }}</td><td>{{ card.stroke_count|default:"—" }}</td>{% endif %}
+          {% if can_edit %}
+          <td class="text-end text-nowrap">
+            <a href="{% url 'card_update' card.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'card_delete' card.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-body-secondary py-4">Talia jest pusta.{% if can_edit %} <a href="{% url 'card_create' deck.pk %}">Dodaj pierwszą kartę</a>.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

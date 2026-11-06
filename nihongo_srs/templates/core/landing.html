@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row align-items-center py-4 g-5">
+  <div class="col-lg-6">
+    <h1 class="display-5 fw-bold">Ucz się japońskiego <span class="text-accent">skutecznie</span>.</h1>
+    <p class="lead text-body-secondary">
+      Nihongo SRS planuje powtórki za Ciebie. Algorytm SM-2 pokazuje kartę dokładnie wtedy,
+      gdy zaczynasz ją zapominać, więc uczysz się szybciej i pamiętasz dłużej.
+    </p>
+    <div class="d-flex gap-2">
+      <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Załóż konto</a>
+      <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg">Zaloguj się</a>
+    </div>
+  </div>
+  <div class="col-lg-6 text-center">
+    <div class="hero-kanji jp">日本語</div>
+    <p class="jp text-body-secondary mt-2">にほんご · nihongo</p>
+  </div>
+</div>
+<div class="row g-4 mt-2">
+  <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h2 class="h5"><i class="bi bi-alphabet text-accent"></i> Kana od podstaw</h2>
+    <p class="mb-0 text-body-secondary">Hiragana i katakana: znaki podstawowe, dakuten i połączenia yōon.</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h2 class="h5"><i class="bi bi-arrow-repeat text-accent"></i> Powtórki SRS</h2>
+    <p class="mb-0 text-body-secondary">Oceniasz odpowiedź, a aplikacja sama wylicza termin następnej powtórki.</p>
+  </div></div></div>
+  <div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body">
+    <h2 class="h5"><i class="bi bi-collection text-accent"></i> Własne talie</h2>
+    <p class="mb-0 text-body-secondary">Twórz własne zestawy słówek i kanji obok talii systemowych.</p>
+  </div></div></div>
+</div>
+{% endblock %}

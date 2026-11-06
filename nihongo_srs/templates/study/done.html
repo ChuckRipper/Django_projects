@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Koniec nauki – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <div class="hero-kanji jp mb-2">完了</div>
+  <p class="jp text-body-secondary">かんりょう · kanryō, „ukończone”</p>
+  <h1 class="h3 mt-3">Na teraz to wszystko!</h1>
+  <p class="text-body-secondary">
+    {% if deck %}W talii „{{ deck.name }}” nie ma już kart do nauki.{% else %}Nie ma kart do powtórki ani nowych kart w dzisiejszym limicie.{% endif %}
+    Dzisiaj: {{ summary.reviews_today }} powtórek, seria: {{ summary.streak_days }} dni.
+  </p>
+  <a href="{% url 'home' %}" class="btn btn-primary">Wróć do pulpitu</a>
+  <a href="{% url 'deck_list' %}" class="btn btn-outline-secondary">Przeglądaj talie</a>
+</div>
+{% endblock %}

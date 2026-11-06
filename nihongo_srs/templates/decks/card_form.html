@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{% if object %}Edycja karty{% else %}Nowa karta{% endif %} – Nihongo SRS{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-1">{% if object %}Edycja karty{% else %}Nowa karta{% endif %}</h1>
+    <p class="text-body-secondary small mb-3">Talia: {{ deck.name }}</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include '_form.html' %}
+      <button class="btn btn-primary">Zapisz</button>
+      {% if not object %}<button class="btn btn-outline-primary" name="save_and_add" value="1">Zapisz i dodaj kolejną</button>{% endif %}
+      <a href="{% url 'deck_detail' deck.pk %}" class="btn btn-secondary">Anuluj</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}
