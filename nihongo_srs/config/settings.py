@@ -19,6 +19,7 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".pythonanywhere.com"]
 ALLOWED_HOSTS += [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 CSRF_TRUSTED_ORIGINS = ["https://*.pythonanywhere.com"]
+CSRF_FAILURE_VIEW = "core.errors.csrf_failure"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.MethodNotAllowedPageMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -129,15 +131,19 @@ SPECTACULAR_SETTINGS = {
 }
 
 # --- Security (production only) ------------------------------------------------
+# DJANGO_HTTPS=False lets you run the production configuration locally over plain HTTP
+# (e.g. to see the custom error pages); never set it on the server.
+HTTPS = os.environ.get("DJANGO_HTTPS", "True").lower() in ("1", "true", "yes")
 if not DEBUG:
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+if not DEBUG and HTTPS:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # PythonAnywhere terminates TLS
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # *.pythonanywhere.com is shared by many sites
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_REFERRER_POLICY = "same-origin"
     # HSTS for subdomains / preload is deliberately off: the site lives on a shared
     # *.pythonanywhere.com domain that we do not control.
     SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
@@ -152,4 +158,5 @@ LOGGING = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.TokenObtainSerializer",
 }

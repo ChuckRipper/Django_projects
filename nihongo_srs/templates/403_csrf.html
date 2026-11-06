@@ -1,0 +1,8 @@
+{% extends '_error.html' %}
+{% block title %}Sesja formularza wygasła – Nihongo SRS{% endblock %}
+{% block kanji %}期限切れ{% endblock %}
+{% block reading %}きげんぎれ · kigengire, „po terminie”{% endblock %}
+{% block code %}BŁĄD 403{% endblock %}
+{% block heading %}Formularz wygasł{% endblock %}
+{% block message %}Nie udało się zweryfikować formularza (zabezpieczenie CSRF). Odśwież stronę i wyślij go ponownie.{% endblock %}
+{% block actions %}<a href="javascript:history.back()" class="btn btn-outline-primary me-2">Wróć do formularza</a><a href="{% url 'home' %}" class="btn btn-primary">Strona główna</a>{% endblock %}

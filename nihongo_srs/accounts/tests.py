@@ -43,11 +43,6 @@ class AccountTests(TestCase):
         self.assertContains(response, "SM-2")
         self.assertContains(response, "KANJIDIC")
 
-    def test_server_error_template(self):
-        from django.template.loader import render_to_string
-
-        self.assertIn("Coś poszło nie tak", render_to_string("500.html"))
-
     def test_favicon(self):
         response = self.client.get("/favicon.ico")
         self.assertRedirects(response, "/static/img/favicon.ico", status_code=301, fetch_redirect_response=False)

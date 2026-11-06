@@ -44,7 +44,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **Statystyki** | wykres powtórek z 30 dni (poprawne / „Znów”), heatmapa aktywności z 20 tygodni, rozkład ocen, nadchodzące powtórki na 7 dni, skuteczność i średni czas odpowiedzi w każdej talii |
 | **Import i eksport** | wczytywanie kart z pliku CSV (polskie lub angielskie nagłówki, automatyczny separator, raport błędów z numerami wierszy), eksport talii do CSV w tym samym formacie |
 | **Panel admina** | zarządzanie taliami systemowymi i kartami, podgląd historii powtórek |
-| **Interfejs** | po polsku, responsywny (sprawdzony od 390 px), motyw jasny i ciemny z przełącznikiem, własne strony 404 i 500, skróty klawiszowe w nauce, strona „O aplikacji” z instrukcją i źródłami danych |
+| **Interfejs** | po polsku, responsywny (sprawdzony od 390 px), motyw jasny i ciemny z przełącznikiem, własne strony błędów 400, 403, 404, 405 i 500 (w API odpowiedzi JSON), skróty klawiszowe w nauce, strona „O aplikacji” z instrukcją i źródłami danych |
 | **REST API** | uwierzytelnianie JWT, talie, karty, kolejka nauki, zapis oceny, statystyki; dokumentacja Swagger UI generowana automatycznie |
 
 ### Rozszerzenia (planowane, jeśli starczy czasu)
@@ -96,7 +96,7 @@ Projekt Django (`config/`) podzielony na aplikacje o jednej odpowiedzialności:
 | `decks` | talie i karty, CRUD, import CSV, komenda ładowania danych |
 | `study` | algorytm SM-2 (`srs.py`, czysta logika bez zależności od widoków), budowa kolejki, sesja nauki |
 | `api` | REST API: serializery, uprawnienia, widoki DRF, routing, Swagger |
-| `core` | strona główna i pulpit, strona 404, tag szablonu do formularzy Bootstrap |
+| `core` | strona główna i pulpit, obsługa błędów HTTP (strony HTML i JSON dla API), tag szablonu do formularzy Bootstrap |
 | `stats` | statystyki i wykresy na podstawie historii powtórek (agregacje w `stats/services.py`) |
 
 ### Planowana struktura repozytorium
@@ -110,7 +110,7 @@ Django_projects/
     ├── manage.py
     ├── requirements.txt
     ├── config/                 # settings.py, urls.py, wsgi.py
-    ├── core/                   # strona główna, pulpit, 404, templatetags/
+    ├── core/                   # strona główna, pulpit, obsługa błędów, templatetags/
     ├── accounts/               # Profile, rejestracja, profil, signals.py (Observer)
     ├── decks/                  # Deck, Card, CRUD, mixins.py (uprawnienia)
     │   ├── sources.py          # adaptery źródeł kart (Adapter)
@@ -274,15 +274,16 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **74 testy**:
+Obecnie **80 testów**:
 
 | Plik | Zakres |
 |---|---|
 | `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
 | `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
-| `accounts/tests.py` | rejestracja, profil, strony publiczne, 404, 500, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
+| `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
+| `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow` |
 
 ---
 
@@ -301,6 +302,7 @@ Konfiguracja produkcyjna pochodzi ze zmiennych środowiskowych ustawianych w pli
 |---|---|---|
 | `DJANGO_DEBUG` | `False` | wyłącza tryb deweloperski i włącza ustawienia bezpieczeństwa (HTTPS, bezpieczne ciasteczka, HSTS) |
 | `DJANGO_SECRET_KEY` | losowy ciąg (np. `python -c "import secrets; print(secrets.token_urlsafe(50))"`) | wymagany przy `DJANGO_DEBUG=False`; bez niego aplikacja nie wystartuje |
+| `DJANGO_HTTPS` | nie ustawiać | tylko lokalnie: `False` pozwala uruchomić konfigurację produkcyjną po zwykłym HTTP (np. żeby obejrzeć strony błędów) |
 | `DJANGO_ALLOWED_HOSTS` | opcjonalnie, po przecinku | dodatkowe domeny (`*.pythonanywhere.com` jest dozwolone domyślnie) |
 
 Plik WSGI (`/var/www/czarodziej_pythonanywhere_com_wsgi.py`):
@@ -368,7 +370,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strona 500, ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:
