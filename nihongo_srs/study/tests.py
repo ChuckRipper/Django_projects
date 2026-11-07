@@ -12,6 +12,7 @@ from decks.models import Card, Deck
 from . import services
 from .models import ReviewLog, ReviewState
 from .srs import RELEARN_INTERVAL_DAYS, LeitnerStrategy, Rating, SchedulingState, SM2Strategy, get_strategy
+from .typing import typing_task
 
 
 class SM2StrategyTests(SimpleTestCase):
@@ -172,3 +173,45 @@ class StudyViewTests(TestCase):
     def test_study_requires_login(self):
         self.client.logout()
         self.assertEqual(self.client.get(reverse("study")).status_code, 302)
+
+
+class TypingModeTests(TestCase):
+    def setUp(self):
+        self.kana = Deck.objects.create(name="Kana", kind=Deck.Kind.KANA)
+        self.vocab = Deck.objects.create(name="Słówka", kind=Deck.Kind.VOCABULARY)
+        self.kanji = Deck.objects.create(name="Kanji", kind=Deck.Kind.KANJI)
+
+    def test_kana_card_accepts_front_and_every_romaji_variant(self):
+        card = Card.objects.create(deck=self.kana, front="ぢ", back="ji (di)")
+        task = typing_task(card)
+        self.assertEqual(task.answers, ["ぢ", "ji", "di"])
+        self.assertFalse(task.kana_input)
+
+    def test_vocabulary_card_asks_for_reading_variants(self):
+        card = Card.objects.create(deck=self.vocab, front="九", back="dziewięć", reading="きゅう; く")
+        task = typing_task(card)
+        self.assertEqual(task.answers, ["きゅう", "く"])
+        self.assertTrue(task.kana_input)
+
+    def test_kanji_and_kana_only_words_are_revealed(self):
+        self.assertIsNone(typing_task(Card.objects.create(deck=self.kanji, front="日", back="dzień")))
+        self.assertIsNone(typing_task(Card.objects.create(deck=self.vocab, front="いい", back="dobry")))
+
+    def test_session_page_and_mode_toggle(self):
+        user = User.objects.create_user("ania", password="Haslo-12345")
+        Card.objects.create(deck=self.kana, front="か", back="ka")
+        self.client.login(username="ania", password="Haslo-12345")
+        url = reverse("study_deck", args=[self.kana.pk])
+        self.assertNotContains(self.client.get(url), 'id="typed-answer"')
+
+        response = self.client.post(reverse("answer_mode_toggle"), {"next": url})
+        self.assertRedirects(response, url)
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.answer_mode, "type")
+        page = self.client.get(url)
+        self.assertContains(page, 'id="typed-answer"')
+        self.assertContains(page, "wanakana")
+        self.assertContains(page, '["\\u304b", "ka"]')  # accepted answers for the browser
+
+        unsafe = self.client.post(reverse("answer_mode_toggle"), {"next": "https://example.com/"})
+        self.assertRedirects(unsafe, reverse("study"), fetch_redirect_response=False)

@@ -24,13 +24,14 @@ class AccountTests(TestCase):
     def test_profile_update(self):
         User.objects.create_user("kenji", password="Sakura-2026!")
         self.client.login(username="kenji", password="Sakura-2026!")
-        self.client.post(reverse("profile"), {"new_cards_per_day": 25, "daily_goal": 50})
+        self.client.post(reverse("profile"), {"new_cards_per_day": 25, "daily_goal": 50, "answer_mode": "type"})
         self.assertEqual(User.objects.get(username="kenji").profile.new_cards_per_day, 25)
+        self.assertEqual(User.objects.get(username="kenji").profile.answer_mode, "type")
 
     def test_profile_validation(self):
         User.objects.create_user("kenji", password="Sakura-2026!")
         self.client.login(username="kenji", password="Sakura-2026!")
-        response = self.client.post(reverse("profile"), {"new_cards_per_day": 0, "daily_goal": 0})
+        response = self.client.post(reverse("profile"), {"new_cards_per_day": 0, "daily_goal": 0, "answer_mode": "type"})
         self.assertEqual(set(response.context["form"].errors), {"new_cards_per_day", "daily_goal"})
 
     def test_pages_render(self):
