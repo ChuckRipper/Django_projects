@@ -11,8 +11,8 @@ class CardInline(admin.TabularInline):
 
 @admin.register(Deck)
 class DeckAdmin(admin.ModelAdmin):
-    list_display = ("name", "kind", "jlpt_level", "owner", "order", "created_at")
-    list_filter = ("kind", "jlpt_level", ("owner", admin.EmptyFieldListFilter))
+    list_display = ("name", "kind", "jlpt_level", "owner", "is_public", "order", "created_at")
+    list_filter = ("kind", "jlpt_level", "is_public", ("owner", admin.EmptyFieldListFilter))
     search_fields = ("name", "description")
     list_select_related = ("owner",)
     inlines = [CardInline]

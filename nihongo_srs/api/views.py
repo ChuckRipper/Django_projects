@@ -39,7 +39,7 @@ class RegisterView(generics.CreateAPIView):
 
 
 @extend_schema_view(
-    list=extend_schema(summary="Lista talii (systemowe + własne)"),
+    list=extend_schema(summary="Lista talii (systemowe, własne i udostępnione przez innych)"),
     retrieve=extend_schema(summary="Szczegóły talii"),
     create=extend_schema(summary="Utworzenie własnej talii"),
     update=extend_schema(summary="Edycja własnej talii"),
@@ -53,7 +53,8 @@ class DeckViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return (
-            Deck.objects.visible_to(self.request.user)
+            Deck.objects.browsable_by(self.request.user)
+            .select_related("owner")
             .annotate(card_count=Count("cards"))
             .order_by("owner_id", "order", "name")
         )
@@ -86,6 +87,22 @@ class DeckViewSet(viewsets.ModelViewSet):
         report = deck_services.import_cards(deck, source, serializer.validated_data["update_existing"])
         return Response(ImportReportSerializer(report).data)
 
+    @extend_schema(
+        summary="Kopia talii do własnych",
+        description="Kopiuje talię systemową lub udostępnioną przez innego użytkownika (z kartami) "
+        "jako nową, prywatną talię zalogowanego użytkownika.",
+        request=None,
+        responses={201: DeckSerializer},
+    )
+    @action(detail=True, methods=["post"], url_path="copy", permission_classes=[permissions.IsAuthenticated])
+    def copy(self, request, pk=None):
+        deck = self.get_object()
+        if deck.owner_id == request.user.id:
+            raise PermissionDenied("To jest Twoja talia: kopiować można talie systemowe i udostępnione.")
+        copy = deck_services.copy_deck(deck, request.user)
+        copy.card_count = copy.cards.count()
+        return Response(DeckSerializer(copy, context={"request": request}).data, status=status.HTTP_201_CREATED)
+
     @extend_schema(summary="Eksport talii do CSV", responses={(200, "text/csv"): OpenApiTypes.STR})
     @action(detail=True, methods=["get"], url_path="export")
     def export(self, request, pk=None):
@@ -109,7 +126,7 @@ class CardViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_queryset(self):
-        return Card.objects.filter(deck__in=Deck.objects.visible_to(self.request.user)).select_related("deck")
+        return Card.objects.filter(deck__in=Deck.objects.browsable_by(self.request.user)).select_related("deck")
 
 
 @extend_schema(

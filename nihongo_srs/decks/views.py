@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView
 
 from study.services import deck_progress
@@ -24,10 +25,17 @@ class DeckListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         now = timezone.now()
-        decks = Deck.objects.visible_to(user)
+        decks = Deck.objects.browsable_by(user).select_related("owner")
         q = self.request.GET.get("q", "").strip()
         kind = self.request.GET.get("kind", "")
         level = self.request.GET.get("level", "")
+        source = self.request.GET.get("source", "")
+        if source == "system":
+            decks = decks.filter(owner__isnull=True)
+        elif source == "own":
+            decks = decks.filter(owner=user)
+        elif source == "shared":
+            decks = decks.filter(is_public=True).exclude(owner=user).exclude(owner__isnull=True)
         if q:
             decks = decks.filter(Q(name__icontains=q) | Q(description__icontains=q))
         if kind in Deck.Kind.values:
@@ -45,7 +53,12 @@ class DeckListView(LoginRequiredMixin, ListView):
                 filter=Q(cards__review_states__user=user, cards__review_states__due_at__lte=now),
                 distinct=True,
             ),
-        ).order_by("owner_id", "order", "name")  # Meta.ordering is ignored in GROUP BY queries
+            # System decks first, then the user's own, then decks shared by others.
+            group=Case(
+                When(owner__isnull=True, then=Value(0)), When(owner=user, then=Value(1)),
+                default=Value(2), output_field=IntegerField(),
+            ),
+        ).order_by("group", "order", "name")  # Meta.ordering is ignored in GROUP BY queries
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -53,6 +66,8 @@ class DeckListView(LoginRequiredMixin, ListView):
             q=self.request.GET.get("q", ""),
             kind=self.request.GET.get("kind", ""),
             level=self.request.GET.get("level", ""),
+            source=self.request.GET.get("source", ""),
+            sources=[("system", "Systemowe"), ("own", "Moje"), ("shared", "Udostępnione przez innych")],
             kinds=Deck.Kind.choices,
             levels=Deck.JlptLevel.choices,
         )
@@ -64,13 +79,17 @@ class DeckDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "deck"
 
     def get_queryset(self):
-        return Deck.objects.visible_to(self.request.user)
+        return Deck.objects.browsable_by(self.request.user).select_related("owner", "copied_from__owner")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
         context["cards"] = self.object.cards.all()
-        context["progress"] = deck_progress(self.request.user, self.object)
-        context["can_edit"] = self.object.can_edit(self.request.user)
+        context["can_edit"] = self.object.can_edit(user)
+        context["shared"] = self.object.is_shared_with(user)
+        context["progress"] = None if context["shared"] else deck_progress(user, self.object)
+        if context["can_edit"] and self.object.is_public:
+            context["copy_count"] = self.object.copies.count()
         return context
 
 
@@ -196,9 +215,22 @@ class CardImportView(LoginRequiredMixin, FormView):
 
 
 @login_required
+@require_POST
+def deck_copy(request, pk):
+    """Copy a system deck or a deck shared by another user into the user's own decks."""
+    deck = get_object_or_404(Deck.objects.browsable_by(request.user).exclude(owner=request.user), pk=pk)
+    copy = services.copy_deck(deck, request.user)
+    renamed = f" jako „{copy.name}”" if copy.name != deck.name else ""
+    messages.success(
+        request, f"Skopiowano talię „{deck.name}” do Twoich talii{renamed} (karty: {copy.cards.count()}).",
+    )
+    return redirect("deck_detail", pk=copy.pk)
+
+
+@login_required
 def deck_export(request, pk):
-    """Download a deck (own or system) as CSV - the same format the import accepts."""
-    deck = get_object_or_404(Deck.objects.visible_to(request.user), pk=pk)
+    """Download a deck (own, system or shared) as CSV - the same format the import accepts."""
+    deck = get_object_or_404(Deck.objects.browsable_by(request.user), pk=pk)
     response = HttpResponse(services.export_csv(deck), content_type="text/csv; charset=utf-8")
     filename = f"talia-{deck.pk}.csv"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'

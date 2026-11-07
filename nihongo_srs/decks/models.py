@@ -12,6 +12,12 @@ class DeckQuerySet(models.QuerySet):
             return self.filter(owner__isnull=True)
         return self.filter(Q(owner__isnull=True) | Q(owner=user))
 
+    def browsable_by(self, user):
+        """Visible decks plus decks other users have shared (read-only, can be copied)."""
+        if user is None or not user.is_authenticated:
+            return self.filter(owner__isnull=True)
+        return self.filter(Q(owner__isnull=True) | Q(owner=user) | Q(is_public=True))
+
 
 class Deck(models.Model):
     class Kind(models.TextChoices):
@@ -35,6 +41,14 @@ class Deck(models.Model):
         help_text="Puste = talia systemowa, dostępna dla wszystkich (tylko do odczytu).",
     )
     order = models.PositiveIntegerField("Kolejność", default=0)
+    is_public = models.BooleanField(
+        "Udostępniona", default=False,
+        help_text="Inni użytkownicy mogą przeglądać talię i skopiować ją do siebie.",
+    )
+    copied_from = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="copies",
+        verbose_name="Skopiowana z",
+    )
     created_at = models.DateTimeField("Utworzono", auto_now_add=True)
 
     objects = DeckQuerySet.as_manager()
@@ -56,6 +70,10 @@ class Deck(models.Model):
 
     def can_edit(self, user):
         return user.is_authenticated and self.owner_id == user.id
+
+    def is_shared_with(self, user):
+        """Someone else's public deck: the user may browse and copy it, but not study or edit it."""
+        return self.is_public and self.owner_id is not None and self.owner_id != user.id
 
 
 class Card(models.Model):
