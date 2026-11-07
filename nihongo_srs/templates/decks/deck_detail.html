@@ -35,7 +35,9 @@
         {% for card in cards %}
         <tr>
           <td class="text-body-secondary">{{ forloop.counter }}</td>
-          <td class="jp fs-4">{{ card.front }}</td>
+          <td class="jp fs-4 text-nowrap">{{ card.front }}
+            <button type="button" class="btn btn-sm btn-link text-body-secondary align-baseline px-1" data-strokes="{{ card.front }}"
+                    data-bs-toggle="tooltip" title="Jak pisać? Kolejność kresek" aria-label="Jak pisać: {{ card.front }}"><i class="bi bi-brush"></i></button></td>
           <td>{{ card.back }}{% if card.meaning_en and card.meaning_en != card.back %}<div class="small text-body-secondary d-none d-md-block">{{ card.meaning_en }}</div>{% endif %}</td>
           {% if deck.kind != 'kanji' %}<td class="jp">{{ card.reading|default:"—" }}</td>{% endif %}
           {% if deck.kind == 'kanji' %}<td class="jp small">{{ card.onyomi|default:"—" }} / {{ card.kunyomi|default:"—" }}</td><td>{{ card.stroke_count|default:"—" }}</td>{% endif %}

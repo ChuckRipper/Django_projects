@@ -83,17 +83,20 @@
     <span>Nihongo SRS · projekt zaliczeniowy, WSB Merito Chorzów · <a href="{% url 'about' %}" class="link-secondary">O aplikacji</a><span class="d-none d-lg-inline"> · <a href="#" class="link-secondary" data-bs-toggle="modal" data-bs-target="#shortcuts-modal">Skróty klawiszowe <kbd>?</kbd></a></span></span>
     <span>
       Dane: <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" class="link-secondary">KANJIDIC</a> (CC BY-SA 4.0),
-      listy JLPT: <a href="http://www.tanos.co.uk/jlpt/" class="link-secondary">tanos.co.uk</a> ·
+      listy JLPT: <a href="http://www.tanos.co.uk/jlpt/" class="link-secondary">tanos.co.uk</a>,
+      kreski: <a href="https://kanjivg.tagaini.net/" class="link-secondary">KanjiVG</a> (CC BY-SA 3.0) ·
       <a href="/api/docs/" class="link-secondary">API</a>
     </span>
   </div>
 </footer>
 
 {% include 'shortcuts_modal.html' %}
+{% include 'strokes_modal.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/theme.js' %}"></script>
 <script src="{% static 'js/shortcuts.js' %}"></script>
+<script src="{% static 'js/strokes.js' %}"></script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

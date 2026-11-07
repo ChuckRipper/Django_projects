@@ -40,6 +40,7 @@ class KeyboardShortcutTests(TestCase):
         self.assertContains(response, 'data-shortcut="u"')  # start studying
         self.assertContains(response, "js/shortcuts.js")
         self.assertContains(self.client.get("/talie/"), 'data-shortcut="f"')
+        self.assertContains(response, 'id="stroke-modal"')
 
 
 @override_settings(ROOT_URLCONF=__name__)

@@ -96,7 +96,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Tooltips: elements with data-shortcut get the key appended to their title.
     document.querySelectorAll("[data-shortcut]").forEach(function (el) {
-      const label = el.dataset.shortcutLabel || el.getAttribute("title") || el.textContent.trim();
+      const label = el.getAttribute("title") || el.dataset.shortcutLabel || el.textContent.trim();
       el.setAttribute("title", label + " · skrót: " + el.dataset.shortcut.toUpperCase());
       el.setAttribute("data-bs-toggle", "tooltip");
       el.setAttribute("aria-keyshortcuts", el.dataset.shortcut.toUpperCase());

@@ -11,6 +11,9 @@
     <div class="card-body d-flex flex-column justify-content-center p-4">
       <div class="small text-body-secondary mb-2">{{ card.deck.get_kind_display }}{% if card.deck.jlpt_level %} · {{ card.deck.jlpt_level }}{% endif %}</div>
       <div class="study-front jp {% if card.front|length > 4 %}long{% endif %}">{{ card.front }}</div>
+      <div><button type="button" class="btn btn-sm btn-link text-body-secondary" data-strokes="{{ card.front }}"
+              data-shortcut="k" data-shortcut-label="jak pisać? (kolejność kresek)" title="Jak pisać? Kolejność kresek">
+        <i class="bi bi-brush"></i> Jak pisać?</button></div>
 
       <div id="answer" class="d-none mt-4">
         <hr>

@@ -1,5 +1,7 @@
+import json
 from io import StringIO
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -32,6 +34,17 @@ class LoadDataTests(TestCase):
         self.assertIn("ニチ", card.onyomi)  # on'yomi converted to katakana
         self.assertEqual(card.stroke_count, 4)
         self.assertTrue(card.example)
+
+    def test_stroke_order_data_covers_system_decks(self):
+        call_command("load_data", stdout=StringIO())
+        strokes_dir = settings.BASE_DIR / "static" / "strokes"
+        fronts = "".join(Card.objects.filter(deck__owner=None).values_list("front", flat=True))
+        chars = {c for c in fronts if not c.isascii()} - {"～"}
+        missing = [c for c in chars if not (strokes_dir / f"{ord(c):05x}.json").exists()]
+        self.assertEqual(missing, [])
+        for card in Card.objects.filter(deck__kind=Deck.Kind.KANJI):  # KanjiVG agrees with KANJIDIC
+            data = json.loads((strokes_dir / f"{ord(card.front):05x}.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(data["s"]), card.stroke_count, card.front)
 
     def test_vocabulary_cleanup(self):
         call_command("load_data", stdout=StringIO())

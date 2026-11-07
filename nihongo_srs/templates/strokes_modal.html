@@ -1,0 +1,39 @@
+<div class="modal fade" id="stroke-modal" tabindex="-1" aria-labelledby="stroke-heading" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="stroke-heading"><i class="bi bi-brush"></i> Jak pisać: <span id="stroke-title" class="jp"></span></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+      </div>
+      <div class="modal-body">
+        <div id="stroke-area" class="d-flex flex-wrap justify-content-center gap-3"></div>
+        <div id="stroke-controls" class="mt-3">
+          <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary" id="stroke-restart" title="Od początku (R)"><i class="bi bi-skip-start-fill"></i><span class="visually-hidden">Od początku</span></button>
+            <button type="button" class="btn btn-outline-secondary" id="stroke-prev" title="Poprzednia kreska (←)"><i class="bi bi-chevron-left"></i><span class="visually-hidden">Poprzednia kreska</span></button>
+            <button type="button" class="btn btn-primary px-4" id="stroke-play"><i class="bi bi-play-fill"></i> Odtwórz</button>
+            <button type="button" class="btn btn-outline-secondary" id="stroke-next" title="Następna kreska (→)"><i class="bi bi-chevron-right"></i><span class="visually-hidden">Następna kreska</span></button>
+            <select class="form-select w-auto" id="stroke-speed" aria-label="Tempo">
+              <option value="slow">Wolno</option>
+              <option value="normal" selected>Normalnie</option>
+              <option value="fast">Szybko</option>
+            </select>
+          </div>
+          <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mt-2">
+            <span id="stroke-counter" class="small text-body-secondary"></span>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="stroke-numbers" checked>
+              <label class="form-check-label small" for="stroke-numbers">Numery kresek</label>
+            </div>
+          </div>
+          <p class="small text-body-secondary text-center mt-2 mb-0 d-none d-lg-block">
+            <kbd>Spacja</kbd> odtwórz/pauza · <kbd>←</kbd> <kbd>→</kbd> kreska po kresce · <kbd>R</kbd> od początku
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center py-2">
+        <span class="small text-body-secondary">Kolejność kresek: <a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener">KanjiVG</a> (CC BY-SA 3.0)</span>
+      </div>
+    </div>
+  </div>
+</div>
