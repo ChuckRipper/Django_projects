@@ -28,6 +28,8 @@
     revealBtn.addEventListener("click", reveal);
     document.addEventListener("keydown", function (event) {
       if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") return;
+      if (event.ctrlKey || event.altKey || event.metaKey) return;  // e.g. Ctrl+1 switches browser tabs
+      if (document.querySelector(".modal.show")) return;
       if (event.code === "Space" || event.key === "Enter") {
         if (!revealed) { event.preventDefault(); reveal(); }
       } else if (revealed && ["1", "2", "3", "4"].includes(event.key)) {

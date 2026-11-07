@@ -203,3 +203,45 @@ body {
   border-radius: 0 4px 4px 0;
   background: var(--ns-chart-1);
 }
+
+/* --- Stroke-order player ("Jak pisać?") --------------------------------------- */
+.stroke-svg {
+  width: min(240px, 70vw);
+  height: auto;
+  background: var(--ns-surface);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 8px;
+}
+.stroke-grid {
+  stroke: var(--bs-border-color);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+}
+.stroke-ghost path,
+.stroke-ink path {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stroke-ghost path { stroke: var(--bs-border-color); }
+.stroke-ink path { stroke: var(--bs-body-color); }
+.stroke-ink path.active { stroke: var(--ns-accent); }
+.stroke-numbers text {
+  font-size: 8px;
+  fill: var(--ns-accent);
+  opacity: 0;
+  font-family: system-ui, sans-serif;
+}
+.stroke-numbers text.visible { opacity: 1; }
+.hide-numbers .stroke-numbers { display: none; }
+.stroke-missing {
+  width: min(240px, 70vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: 6rem;
+  color: var(--bs-secondary-color);
+  border: 1px dashed var(--bs-border-color);
+  border-radius: 8px;
+}
