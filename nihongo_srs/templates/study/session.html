@@ -6,6 +6,14 @@
   <span>{% if deck %}Talia: <a href="{% url 'deck_detail' deck.pk %}">{{ deck.name }}</a>{% else %}Wszystkie talie{% endif %}</span>
   <span>W kolejce: <strong>{{ remaining }}</strong>{% if is_new %} · <span class="badge text-bg-info">nowa karta</span>{% endif %}</span>
 </div>
+<form method="post" action="{% url 'answer_mode_toggle' %}" class="text-end mb-2">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <button class="btn btn-sm btn-link text-body-secondary p-0" data-shortcut="w"
+          data-shortcut-label="przełącz tryb: odsłanianie / wpisywanie" title="Przełącz tryb odpowiedzi">
+    <i class="bi {% if type_mode %}bi-input-cursor-text{% else %}bi-eye{% endif %}"></i>
+    Tryb: {% if type_mode %}wpisywanie{% else %}odsłanianie{% endif %} · zmień
+  </button>
+</form>
 <div class="row justify-content-center"><div class="col-lg-7">
   <div class="card shadow study-card text-center">
     <div class="card-body d-flex flex-column justify-content-center p-4">
@@ -14,6 +22,19 @@
       <div><button type="button" class="btn btn-sm btn-link text-body-secondary" data-strokes="{{ card.front }}"
               data-shortcut="k" data-shortcut-label="jak pisać? (kolejność kresek)" title="Jak pisać? Kolejność kresek">
         <i class="bi bi-brush"></i> Jak pisać?</button></div>
+
+      {% if typing %}
+      <div id="typing" class="mt-3">
+        <label for="typed-answer" class="form-label small text-body-secondary mb-1">{{ typing.prompt }}</label>
+        <input id="typed-answer" class="form-control form-control-lg text-center jp mx-auto" style="max-width: 20rem"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               placeholder="{{ typing.placeholder }}" data-kana="{{ typing.kana_input|yesno:'1,0' }}">
+        <div id="typed-feedback" class="mt-2 d-none" role="status"></div>
+      </div>
+      {{ typing_answers|json_script:"typing-answers" }}
+      {% elif type_mode %}
+      <p class="small text-body-secondary mt-3 mb-0">Tę kartę odsłaniasz: wpisywanie działa przy kartach kana i odczytach słówek.</p>
+      {% endif %}
 
       <div id="answer" class="d-none mt-4">
         <hr>
@@ -29,7 +50,11 @@
   </div>
 
   <div class="text-center mt-3">
+    {% if typing %}
+    <button id="reveal-btn" class="btn btn-primary btn-lg px-5" type="button">Sprawdź <span class="small opacity-75">(Enter)</span></button>
+    {% else %}
     <button id="reveal-btn" class="btn btn-primary btn-lg px-5" type="button">Pokaż odpowiedź <span class="small opacity-75">(spacja)</span></button>
+    {% endif %}
   </div>
 
   <form id="review-form" method="post" class="mt-3">
@@ -41,7 +66,11 @@
       <button class="btn btn-outline-success rating-btn" name="rating" value="2">Dobre <span class="small opacity-75">3</span></button>
       <button class="btn btn-outline-primary rating-btn" name="rating" value="3">Łatwe <span class="small opacity-75">4</span></button>
     </div>
+    <p id="suggestion-hint" class="small text-body-secondary text-center mt-2 d-none"><kbd>Enter</kbd> zatwierdza podświetloną ocenę, <kbd>1</kbd>–<kbd>4</kbd> wybiera inną.</p>
   </form>
 </div></div>
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/study.js' %}"></script>{% endblock %}
+{% block extra_js %}
+{% if typing %}<script src="https://cdn.jsdelivr.net/npm/wanakana@5.3.1/wanakana.min.js"></script>{% endif %}
+<script src="{% static 'js/study.js' %}"></script>
+{% endblock %}

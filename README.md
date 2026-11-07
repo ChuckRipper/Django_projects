@@ -52,7 +52,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Rozszerzenie | Stan |
 |---|---|
 | **„Jak pisać?”**: animowana kolejność kresek dla kana i kanji (także słówek, znak po znaku): odtwarzanie, pauza, krok po kroku, tempo, numery kresek; w nauce (przycisk lub `K`) i przy każdej karcie w talii | ✅ |
-| tryb „wpisz odpowiedź” z konwersją romaji → kana w trakcie pisania | ⏳ |
+| **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach odczyt z konwersją romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
 | udostępnianie własnych talii innym użytkownikom | ⏳ |
 | reset hasła e-mailem | ⏳ |
 
@@ -80,7 +80,7 @@ Razem: 10 talii systemowych, 1828 kart.
 | Frontend | szablony Django, Bootstrap 5.3 (motyw jasny i ciemny przez `data-bs-theme`), Bootstrap Icons |
 | REST API | Django REST Framework, drf-spectacular (OpenAPI 3 / Swagger UI), djangorestframework-simplejwt (JWT) |
 | Wykresy | Chart.js |
-| Wprowadzanie kana | WanaKana (rozszerzenie) |
+| Wprowadzanie kana | WanaKana 5.3 (CDN), tryb wpisywania odpowiedzi |
 | Testy | `django.test` (`TestCase`, `SimpleTestCase`, klient testowy), `rest_framework.test.APITestCase` |
 | Hosting | PythonAnywhere |
 
@@ -277,7 +277,7 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **82 testy**:
+Obecnie **86 testów**:
 
 | Plik | Zakres |
 |---|---|
@@ -373,7 +373,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek; ⏳ pozostałe rozszerzenia, ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania; ⏳ pozostałe rozszerzenia, ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:

@@ -18,6 +18,16 @@ class Profile(models.Model):
         "Cel dzienny (powtórki)", default=30,
     )
 
+    class AnswerMode(models.TextChoices):
+        REVEAL = "reveal", "Odsłanianie odpowiedzi"
+        TYPE = "type", "Wpisywanie odpowiedzi"
+
+    answer_mode = models.CharField(
+        "Tryb odpowiedzi", max_length=10, choices=AnswerMode.choices, default=AnswerMode.REVEAL,
+        help_text="W trybie wpisywania przy kartach kana podajesz zapis w romaji, a przy słówkach "
+                  "odczyt (romaji zamienia się w kanę w trakcie pisania). Karty kanji zawsze się odsłania.",
+    )
+
     class Meta:
         verbose_name = "Profil"
         verbose_name_plural = "Profile"

@@ -25,7 +25,7 @@ class RegisterForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ("new_cards_per_day", "daily_goal")
+        fields = ("new_cards_per_day", "daily_goal", "answer_mode")
         widgets = {
             "new_cards_per_day": forms.NumberInput(attrs={"min": 1, "max": 100}),
             "daily_goal": forms.NumberInput(attrs={"min": 1, "max": 500}),

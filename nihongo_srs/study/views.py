@@ -2,12 +2,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import BadRequest
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
+from accounts.models import Profile
 from decks.models import Card, Deck
 
 from . import services
 from .forms import ReviewForm
+from .typing import typing_task
 
 
 class StudyView(LoginRequiredMixin, View):
@@ -30,7 +33,12 @@ class StudyView(LoginRequiredMixin, View):
             })
         card = queue[0]
         is_new = not card.review_states.filter(user=request.user).exists()
+        type_mode = request.user.profile.answer_mode == Profile.AnswerMode.TYPE
+        task = typing_task(card) if type_mode else None
         return render(request, self.template_name, {
+            "type_mode": type_mode,
+            "typing": task,
+            "typing_answers": task.answers if task else [],
             "deck": deck,
             "card": card,
             "is_new": is_new,
@@ -55,3 +63,19 @@ class StudyView(LoginRequiredMixin, View):
         if deck is not None:
             return redirect("study_deck", deck_pk=deck.pk)
         return redirect("study")
+
+
+class AnswerModeToggleView(LoginRequiredMixin, View):
+    """Switch between revealing and typing answers (button on the study page)."""
+
+    def post(self, request):
+        profile = request.user.profile
+        profile.answer_mode = (
+            Profile.AnswerMode.REVEAL if profile.answer_mode == Profile.AnswerMode.TYPE
+            else Profile.AnswerMode.TYPE
+        )
+        profile.save(update_fields=["answer_mode"])
+        next_url = request.POST.get("next", "")
+        if not url_has_allowed_host_and_scheme(next_url, {request.get_host()}, request.is_secure()):
+            next_url = "study"
+        return redirect(next_url)
