@@ -1,4 +1,7 @@
+import re
+
 from django.contrib.auth.models import User
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -69,3 +72,43 @@ class CaseInsensitiveLoginTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors["username"])
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("kenji", email="kenji@example.com", password="Sakura-2026!")
+
+    def test_reset_by_email_end_to_end(self):
+        self.assertContains(self.client.get(reverse("login")), reverse("password_reset"))
+        response = self.client.post(reverse("password_reset"), {"email": "KENJI@example.com"})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.subject, "Nihongo SRS: reset hasła")
+        self.assertEqual(message.to, ["kenji@example.com"])
+        self.assertIn("Cześć kenji", message.body)
+        self.assertEqual(message.alternatives[0][1], "text/html")
+
+        link = re.search(r"http://testserver(/konto/haslo/reset/\S+/)", message.body).group(1)
+        form_page = self.client.get(link, follow=True)  # Django swaps the token for a session key
+        self.assertContains(form_page, "Ustaw nowe hasło")
+        response = self.client.post(form_page.redirect_chain[-1][0], {
+            "new_password1": "Nowe-Haslo-2026", "new_password2": "Nowe-Haslo-2026",
+        })
+        self.assertRedirects(response, reverse("password_reset_complete"))
+        self.assertTrue(self.client.login(username="kenji", password="Nowe-Haslo-2026"))
+        self.assertContains(self.client.get(link, follow=True), "Link jest nieważny")  # one-time link
+
+    def test_unknown_email_looks_the_same_and_sends_nothing(self):
+        response = self.client.post(reverse("password_reset"), {"email": "nikt@example.com"})
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(mail.outbox, [])
+
+    def test_password_change(self):
+        self.client.login(username="kenji", password="Sakura-2026!")
+        self.assertContains(self.client.get(reverse("profile")), reverse("password_change"))
+        response = self.client.post(reverse("password_change"), {
+            "old_password": "Sakura-2026!", "new_password1": "Inne-Haslo-2026", "new_password2": "Inne-Haslo-2026",
+        })
+        self.assertRedirects(response, reverse("password_change_done"))
+        self.assertTrue(self.client.login(username="kenji", password="Inne-Haslo-2026"))

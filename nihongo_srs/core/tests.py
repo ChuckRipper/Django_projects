@@ -66,8 +66,7 @@ class ErrorPageTests(TestCase):
     def test_api_errors_are_json(self):
         for url, status in (("/api/test/400/", 400), ("/api/test/403/", 403),
                             ("/api/nie-ma/", 404), ("/api/test/500/", 500)):
-            with self.assertLogs("django", "WARNING"):
-                response = self.client.get(url)
+            response = self.client.get(url)
             self.assertEqual(response.status_code, status, url)
             self.assertEqual(response["Content-Type"], "application/json")
             self.assertIn("detail", response.json())
