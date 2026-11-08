@@ -10,6 +10,7 @@ urlpatterns = [
     path("<int:pk>/usun/", views.DeckDeleteView.as_view(), name="deck_delete"),
     path("<int:pk>/import/", views.CardImportView.as_view(), name="card_import"),
     path("<int:pk>/eksport/", views.deck_export, name="deck_export"),
+    path("<int:pk>/kopiuj/", views.deck_copy, name="deck_copy"),
     path("<int:deck_pk>/karty/nowa/", views.CardCreateView.as_view(), name="card_create"),
     path("karty/<int:pk>/edytuj/", views.CardUpdateView.as_view(), name="card_update"),
     path("karty/<int:pk>/usun/", views.CardDeleteView.as_view(), name="card_delete"),

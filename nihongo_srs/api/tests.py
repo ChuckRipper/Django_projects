@@ -100,3 +100,19 @@ class ApiTests(APITestCase):
         data = self.client.get("/api/stats/daily/?days=7").data
         self.assertEqual(len(data), 7)
         self.assertEqual(data[-1]["again"], 1)
+
+    def test_shared_deck_listed_read_only_and_copyable(self):
+        self.foreign.is_public = True
+        self.foreign.save()
+        Card.objects.create(deck=self.foreign, front="猫", back="kot")
+        self.authenticate()
+        decks = {d["name"]: d for d in self.client.get("/api/decks/").data["results"]}
+        self.assertEqual(decks["Bartka"]["owner"], "bartek")
+        self.assertEqual(self.client.patch(f"/api/decks/{self.foreign.pk}/", {"name": "x"}).status_code, 403)
+        self.assertEqual(self.client.get(f"/api/decks/{self.foreign.pk}/cards/").data["count"], 1)
+        response = self.client.post(f"/api/decks/{self.foreign.pk}/copy/")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual((response.data["owner"], response.data["card_count"]), ("ania", 1))
+        self.assertEqual(response.data["copied_from"], self.foreign.pk)
+        own = response.data["id"]
+        self.assertEqual(self.client.post(f"/api/decks/{own}/copy/").status_code, 403)

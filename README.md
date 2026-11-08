@@ -53,7 +53,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 |---|---|
 | **„Jak pisać?”**: animowana kolejność kresek dla kana i kanji (także słówek, znak po znaku): odtwarzanie, pauza, krok po kroku, tempo, numery kresek; w nauce (przycisk lub `K`) i przy każdej karcie w talii | ✅ |
 | **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach odczyt z konwersją romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
-| udostępnianie własnych talii innym użytkownikom | ⏳ |
+| **udostępnianie talii**: własną talię można oznaczyć jako udostępnioną; inni widzą ją z nazwą autora (filtr „Udostępnione przez innych”), przeglądają, pobierają CSV i kopiują do siebie (`POST /talie/<id>/kopiuj/`, w API `POST /api/decks/{id}/copy/`); kopia jest prywatna i niezależna od oryginału, postęp nauki liczy się na kopii; tak samo można skopiować talię systemową | ✅ |
 | reset hasła e-mailem | ⏳ |
 
 ### Materiał na start
@@ -136,7 +136,7 @@ Django_projects/
 
 | Model | Najważniejsze pola | Uwagi |
 |---|---|---|
-| `Deck` | `name`, `description`, `kind` (kana / vocabulary / kanji), `jlpt_level`, `owner`, `created_at` | `owner = NULL` → talia systemowa |
+| `Deck` | `name`, `description`, `kind` (kana / vocabulary / kanji), `jlpt_level`, `owner`, `is_public`, `copied_from`, `created_at` | `owner = NULL` → talia systemowa; `is_public` → udostępniona innym; `copied_from` → oryginał kopii |
 | `Card` | `deck`, `front`, `back`, `meaning_en`, `reading`, `example`, `onyomi`, `kunyomi`, `stroke_count`, `order` | pola kanji wypełniane tylko dla kart kanji; `meaning_en` – oryginalne znaczenie ze słownika |
 | `ReviewState` | `user`, `card`, `ease_factor`, `interval_days`, `repetitions`, `lapses`, `due_at`, `introduced_at` | unikalna para `user` + `card`; stan nauki konkretnej osoby |
 | `ReviewLog` | `user`, `card`, `rating`, `reviewed_at`, `response_ms`, `interval_before`, `interval_after` | pełna historia, źródło statystyk |
@@ -231,11 +231,12 @@ Zalogowany w przeglądarce użytkownik może korzystać ze Swaggera także bez t
 | POST | `/api/auth/register/` | rejestracja (bez uwierzytelnienia) |
 | POST | `/api/auth/token/` | logowanie → tokeny `access` i `refresh` |
 | POST | `/api/auth/token/refresh/` | nowy token `access` |
-| GET, POST | `/api/decks/` | lista talii (systemowe + własne), utworzenie własnej |
+| GET, POST | `/api/decks/` | lista talii (systemowe, własne, udostępnione przez innych), utworzenie własnej |
 | GET, PUT, PATCH, DELETE | `/api/decks/{id}/` | szczegóły; zmiany tylko we własnych taliach |
 | GET | `/api/decks/{id}/cards/` | karty w talii |
 | POST | `/api/decks/{id}/import/` | import kart z CSV (`multipart/form-data`: `file`, `update_existing`) → raport |
 | GET | `/api/decks/{id}/export/` | eksport talii do CSV |
+| POST | `/api/decks/{id}/copy/` | kopia talii systemowej lub udostępnionej do własnych |
 | GET, POST | `/api/cards/` | lista kart, dodanie karty do własnej talii |
 | GET, PUT, PATCH, DELETE | `/api/cards/{id}/` | szczegóły; zmiany tylko we własnych taliach |
 | GET | `/api/study/queue/?deck=&limit=` | kolejka nauki |
@@ -277,15 +278,15 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **86 testów**:
+Obecnie **93 testy**:
 
 | Plik | Zakres |
 |---|---|
 | `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
-| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry |
+| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry; udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
 | `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
-| `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, statystyki, Swagger |
+| `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, udostępnione talie i kopia przez API, statystyki, Swagger |
 | `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow`; okno skrótów klawiszowych |
 
 ---
@@ -373,7 +374,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania; ⏳ pozostałe rozszerzenia, ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania, ✅ udostępnianie talii; ⏳ pozostałe rozszerzenia, ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:

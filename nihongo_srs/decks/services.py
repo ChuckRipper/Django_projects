@@ -69,3 +69,43 @@ def export_csv(deck: Deck) -> str:
     for card in deck.cards.all():
         writer.writerow(["" if getattr(card, name) is None else getattr(card, name) for name in EXPORT_COLUMNS])
     return buffer.getvalue()
+
+
+CARD_COPY_FIELDS = (
+    "front", "back", "meaning_en", "reading", "example", "onyomi", "kunyomi", "stroke_count", "order",
+)
+
+
+def _free_copy_name(user, name: str) -> str:
+    """'Name', then 'Name (kopia)', 'Name (kopia 2)'... - deck names are unique per user."""
+    taken = {n.lower() for n in Deck.objects.filter(owner=user).values_list("name", flat=True)}
+    candidates = [name] + [f"{name} (kopia)"] + [f"{name} (kopia {i})" for i in range(2, 1000)]
+    max_length = Deck._meta.get_field("name").max_length
+    for candidate in candidates:
+        suffix = candidate[len(name):]
+        candidate = name[: max_length - len(suffix)] + suffix
+        if candidate.lower() not in taken:
+            return candidate
+    raise ValidationError("Nie udało się nadać nazwy kopii talii.")
+
+
+@transaction.atomic
+def copy_deck(deck: Deck, user) -> Deck:
+    """Copy a system or shared deck (with all its cards) into the user's own, private decks.
+
+    The copy is independent: the author can later change or delete the original without
+    affecting it, and study progress is kept per user on the copy's cards.
+    """
+    copy = Deck.objects.create(
+        owner=user,
+        name=_free_copy_name(user, deck.name),
+        description=deck.description,
+        kind=deck.kind,
+        jlpt_level=deck.jlpt_level,
+        copied_from=deck,
+    )
+    Card.objects.bulk_create(
+        Card(deck=copy, **{name: getattr(card, name) for name in CARD_COPY_FIELDS})
+        for card in deck.cards.all()
+    )
+    return copy

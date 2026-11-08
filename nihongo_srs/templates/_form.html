@@ -3,8 +3,15 @@
 {% for field in form.hidden_fields %}{{ field }}{% endfor %}
 {% for field in form.visible_fields %}
 <div class="mb-3">
+  {% if field.widget_type == 'checkbox' %}
+  <div class="form-check form-switch">
+    {{ field|bootstrap }}
+    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  </div>
+  {% else %}
   <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
   {{ field|bootstrap }}
+  {% endif %}
   {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
   {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
 </div>

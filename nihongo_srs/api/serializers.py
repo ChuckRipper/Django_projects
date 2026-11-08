@@ -9,11 +9,15 @@ from study.models import ReviewLog, ReviewState
 class DeckSerializer(serializers.ModelSerializer):
     is_system = serializers.BooleanField(read_only=True)
     card_count = serializers.IntegerField(read_only=True)
+    owner = serializers.CharField(source="owner.username", read_only=True, default=None)
 
     class Meta:
         model = Deck
-        fields = ("id", "name", "description", "kind", "jlpt_level", "is_system", "card_count", "created_at")
-        read_only_fields = ("id", "created_at")
+        fields = (
+            "id", "name", "description", "kind", "jlpt_level", "is_system", "is_public", "owner",
+            "copied_from", "card_count", "created_at",
+        )
+        read_only_fields = ("id", "copied_from", "created_at")
 
     def validate_name(self, value):
         user = self.context["request"].user

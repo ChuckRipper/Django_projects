@@ -170,3 +170,57 @@ class FactoryAndImportTests(TestCase):
         response = self.client.get(reverse("deck_export", args=[self.deck.pk]))
         self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
         self.assertIn("山,góra", response.content.decode())
+
+
+class DeckSharingTests(TestCase):
+    def setUp(self):
+        self.author = User.objects.create_user("autor", password="Sakura-2026!")
+        self.reader = User.objects.create_user("czytelnik", password="Sakura-2026!")
+        self.shared = Deck.objects.create(owner=self.author, name="Zwierzęta", kind=Deck.Kind.VOCABULARY, is_public=True)
+        self.private = Deck.objects.create(owner=self.author, name="Prywatna")
+        for i, (front, back) in enumerate([("猫", "kot"), ("犬", "pies")]):
+            Card.objects.create(deck=self.shared, front=front, back=back, reading="ねこ" if i == 0 else "いぬ", order=i)
+        self.client.login(username="czytelnik", password="Sakura-2026!")
+
+    def test_shared_deck_is_listed_and_browsable_but_read_only(self):
+        listing = self.client.get(reverse("deck_list"), {"source": "shared"})
+        self.assertEqual([d.name for d in listing.context["decks"]], ["Zwierzęta"])
+        self.assertContains(listing, "od: autor")
+        detail = self.client.get(reverse("deck_detail", args=[self.shared.pk]))
+        self.assertContains(detail, "Skopiuj do moich talii")
+        self.assertNotContains(detail, reverse("study_deck", args=[self.shared.pk]))
+        for name in ("deck_update", "deck_delete", "card_import"):
+            self.assertEqual(self.client.get(reverse(name, args=[self.shared.pk])).status_code, 404, name)
+        self.assertEqual(self.client.get(reverse("study_deck", args=[self.shared.pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("deck_export", args=[self.shared.pk])).status_code, 200)
+
+    def test_private_deck_stays_hidden(self):
+        self.assertEqual(self.client.get(reverse("deck_detail", args=[self.private.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("deck_copy", args=[self.private.pk])).status_code, 404)
+
+    def test_copy_is_independent_and_gets_a_free_name(self):
+        Deck.objects.create(owner=self.reader, name="Zwierzęta")
+        response = self.client.post(reverse("deck_copy", args=[self.shared.pk]))
+        copy = Deck.objects.get(owner=self.reader, copied_from=self.shared)
+        self.assertRedirects(response, reverse("deck_detail", args=[copy.pk]))
+        self.assertEqual(copy.name, "Zwierzęta (kopia)")
+        self.assertFalse(copy.is_public)
+        self.assertEqual(list(copy.cards.values_list("front", "reading")), [("猫", "ねこ"), ("犬", "いぬ")])
+        self.shared.delete()  # the author removes the original
+        copy.refresh_from_db()
+        self.assertEqual(copy.cards.count(), 2)
+        self.assertIsNone(copy.copied_from)
+
+    def test_copy_system_deck_and_study_it(self):
+        system = Deck.objects.create(name="Kana systemowa", kind=Deck.Kind.KANA)
+        Card.objects.create(deck=system, front="あ", back="a")
+        self.client.post(reverse("deck_copy", args=[system.pk]))
+        copy = Deck.objects.get(owner=self.reader, copied_from=system)
+        self.assertEqual(self.client.get(reverse("study_deck", args=[copy.pk])).status_code, 200)
+
+    def test_copy_requires_post(self):
+        self.assertEqual(self.client.get(reverse("deck_copy", args=[self.shared.pk])).status_code, 405)
+
+    def test_deck_form_can_share(self):
+        self.client.post(reverse("deck_create"), {"name": "Moja publiczna", "kind": "vocabulary", "is_public": "on"})
+        self.assertTrue(Deck.objects.get(owner=self.reader, name="Moja publiczna").is_public)
