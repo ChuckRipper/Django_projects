@@ -100,6 +100,25 @@ AUTHENTICATION_BACKENDS = ["accounts.backends.CaseInsensitiveModelBackend"]
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 2  # a reset link is valid for 2 hours
+TEST_RUNNER = "config.test_runner.QuietTestRunner"  # quiet logs, fast hashing in tests
+
+# --- E-mail (password reset) ---------------------------------------------------
+# With DJANGO_EMAIL_USER and DJANGO_EMAIL_PASSWORD set, mail goes out through Gmail SMTP
+# (allowed on free PythonAnywhere accounts); use a Google *app password*, never the account
+# password. Without them, e-mails are printed to the console where runserver runs.
+EMAIL_HOST_USER = os.environ.get("DJANGO_EMAIL_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("DJANGO_EMAIL_PASSWORD", "")
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_TIMEOUT = 15
+    DEFAULT_FROM_EMAIL = f"Nihongo SRS <{EMAIL_HOST_USER}>"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    DEFAULT_FROM_EMAIL = "Nihongo SRS <noreply@localhost>"
 
 # --- Spaced repetition ------------------------------------------------------
 # Scheduling strategy used by study.services (see study/srs.py): "sm2" or "leitner".

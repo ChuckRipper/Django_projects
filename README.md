@@ -54,7 +54,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **„Jak pisać?”**: animowana kolejność kresek dla kana i kanji (także słówek, znak po znaku): odtwarzanie, pauza, krok po kroku, tempo, numery kresek; w nauce (przycisk lub `K`) i przy każdej karcie w talii | ✅ |
 | **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach odczyt z konwersją romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
 | **udostępnianie talii**: własną talię można oznaczyć jako udostępnioną; inni widzą ją z nazwą autora (filtr „Udostępnione przez innych”), przeglądają, pobierają CSV i kopiują do siebie (`POST /talie/<id>/kopiuj/`, w API `POST /api/decks/{id}/copy/`); kopia jest prywatna i niezależna od oryginału, postęp nauki liczy się na kopii; tak samo można skopiować talię systemową | ✅ |
-| reset hasła e-mailem | ⏳ |
+| **reset hasła e-mailem** (link ważny 2 godziny, jednorazowy; ten sam komunikat dla nieznanego adresu) i **zmiana hasła** w profilu; lokalnie e-maile w konsoli, na serwerze przez Gmail SMTP | ✅ |
 
 ### Materiał na start
 
@@ -278,13 +278,13 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **93 testy**:
+Obecnie **96 testów** (ok. 3 s). Testy uruchamia własny runner `config/test_runner.py`: wycisza logi błędów, które testy wywołują celowo (400, 403, 404, CSRF…), i używa szybkiego hashowania haseł (tylko w testach).
 
 | Plik | Zakres |
 |---|---|
 | `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
 | `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry; udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
-| `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu |
+| `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu, reset hasła e-mailem (cały przepływ, nieznany adres, jednorazowy link), zmiana hasła |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, udostępnione talie i kopia przez API, statystyki, Swagger |
 | `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow`; okno skrótów klawiszowych |
@@ -306,6 +306,8 @@ Konfiguracja produkcyjna pochodzi ze zmiennych środowiskowych ustawianych w pli
 |---|---|---|
 | `DJANGO_DEBUG` | `False` | wyłącza tryb deweloperski i włącza ustawienia bezpieczeństwa (HTTPS, bezpieczne ciasteczka, HSTS) |
 | `DJANGO_SECRET_KEY` | losowy ciąg (np. `python -c "import secrets; print(secrets.token_urlsafe(50))"`) | wymagany przy `DJANGO_DEBUG=False`; bez niego aplikacja nie wystartuje |
+| `DJANGO_EMAIL_USER` | adres Gmail, z którego idą e-maile | bez tej i następnej zmiennej e-maile (reset hasła) wypisują się w konsoli |
+| `DJANGO_EMAIL_PASSWORD` | **hasło aplikacji** Google (16 znaków), nie hasło do konta | Konto Google → Bezpieczeństwo → Weryfikacja dwuetapowa → Hasła do aplikacji |
 | `DJANGO_HTTPS` | nie ustawiać | tylko lokalnie: `False` pozwala uruchomić konfigurację produkcyjną po zwykłym HTTP (np. żeby obejrzeć strony błędów) |
 | `DJANGO_ALLOWED_HOSTS` | opcjonalnie, po przecinku | dodatkowe domeny (`*.pythonanywhere.com` jest dozwolone domyślnie) |
 
@@ -374,7 +376,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania, ✅ udostępnianie talii; ⏳ pozostałe rozszerzenia, ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania, ✅ udostępnianie talii, ✅ reset hasła; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:
