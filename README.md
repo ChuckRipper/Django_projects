@@ -7,7 +7,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 > Projekt zaliczeniowy z przedmiotu *Aplikacje internetowe w Django* (mgr inż. Marek Foryś), WSB Merito Chorzów, Informatyka II stopnia, specjalność Programista Python.
 > Autor: Cezary Kalinowski
 
-**Status:** 🚧 w budowie. Etapy M1 i M2 gotowe, M3 w toku, patrz [Plan prac](#plan-prac).
+**Status:** funkcje i dokumentacja gotowe, przed wdrożeniem na PythonAnywhere, patrz [Plan prac](#plan-prac).
 
 ---
 
@@ -101,7 +101,7 @@ Projekt Django (`config/`) podzielony na aplikacje o jednej odpowiedzialności:
 | `core` | strona główna i pulpit, obsługa błędów HTTP (strony HTML i JSON dla API), tag szablonu do formularzy Bootstrap |
 | `stats` | statystyki i wykresy na podstawie historii powtórek (agregacje w `stats/services.py`) |
 
-### Planowana struktura repozytorium
+### Struktura repozytorium
 
 ```
 Django_projects/
@@ -248,8 +248,6 @@ Zalogowany w przeglądarce użytkownik może korzystać ze Swaggera także bez t
 
 ## Instalacja i uruchomienie
 
-> Sekcja będzie uzupełniana wraz z postępem prac.
-
 Wymagania: Python 3.10+ (zalecany 3.13), Git.
 
 ```powershell
@@ -278,7 +276,7 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **96 testów** (ok. 3 s). Testy uruchamia własny runner `config/test_runner.py`: wycisza logi błędów, które testy wywołują celowo (400, 403, 404, CSRF…), i używa szybkiego hashowania haseł (tylko w testach).
+Obecnie **97 testów** (ok. 3 s). Testy uruchamia własny runner `config/test_runner.py`: wycisza logi błędów, które testy wywołują celowo (400, 403, 404, CSRF…), i używa szybkiego hashowania haseł (tylko w testach).
 
 | Plik | Zakres |
 |---|---|
@@ -286,7 +284,7 @@ Obecnie **96 testów** (ok. 3 s). Testy uruchamia własny runner `config/test_ru
 | `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry; udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
 | `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu, reset hasła e-mailem (cały przepływ, nieznany adres, jednorazowy link), zmiana hasła |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
-| `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, udostępnione talie i kopia przez API, statystyki, Swagger |
+| `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, udostępnione talie i kopia przez API, statystyki, Swagger (także grupowanie endpointów logowania w sekcji Auth) |
 | `core/tests.py` | strony błędów 400, 403, 404, 500 (HTML) i ich odpowiedniki JSON w API, nieprawidłowy nagłówek Host, błąd CSRF, 401 w API, przekierowanie do logowania, 405 z nagłówkiem `Allow`; okno skrótów klawiszowych |
 
 ---
@@ -376,7 +374,7 @@ Następnie: Pull Request na GitHubie → merge → `git switch master` → `git 
 | **M0: Specyfikacja** | 05.11 | README, decyzje projektowe | ✅ |
 | **M1: Fundament** | 14.11 | szkielet projektu, konta, modele, talie kana, sesja nauki z SM-2, paleta i motyw ciemny, REST API ze Swaggerem i JWT, favicon, 45 testów | ✅ |
 | **M2: Treść i statystyki** | 28.11 | kanji i słownictwo N5–N4 (1600+ kart, polskie tłumaczenia N5), import/eksport CSV (Adapter, Metoda wytwórcza), statystyki z wykresami i heatmapą, logowanie bez rozróżniania wielkości liter, 70 testów | ✅ |
-| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania, ✅ udostępnianie talii, ✅ reset hasła; ⏳ dokumentacja projektu, ⏳ wdrożenie na PythonAnywhere | 🚧 |
+| **M3: Dopracowanie** | 12.12 | ✅ logo, ✅ strona „O aplikacji”, ✅ strony błędów 400–500 (HTML i JSON), ✅ ustawienia produkcyjne, ✅ widok mobilny; ✅ polskie znaczenia N4, ✅ scenariusz testów manualnych, ✅ skróty klawiszowe, ✅ kolejność kresek, ✅ tryb wpisywania, ✅ udostępnianie talii, ✅ reset hasła, ✅ dokumentacja projektu (Word, PDF, dokument online); ⏳ wdrożenie na PythonAnywhere | 🚧 |
 | **Oddanie** | ok. 17.12 | Moodle + działająca wersja online | ⏳ |
 
 Otwarte kwestie:

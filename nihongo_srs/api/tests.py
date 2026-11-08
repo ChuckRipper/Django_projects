@@ -116,3 +116,8 @@ class ApiTests(APITestCase):
         self.assertEqual(response.data["copied_from"], self.foreign.pk)
         own = response.data["id"]
         self.assertEqual(self.client.post(f"/api/decks/{own}/copy/").status_code, 403)
+
+    def test_schema_groups_token_endpoints_under_auth(self):
+        schema = self.client.get("/api/schema/?format=json").json()
+        tags = {tag for path in schema["paths"].values() for op in path.values() for tag in op.get("tags", [])}
+        self.assertEqual(tags, {"Auth", "Talie", "Karty", "Nauka", "Statystyki"})

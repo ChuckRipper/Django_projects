@@ -1,6 +1,10 @@
 """Root URL configuration."""
 
 from django.contrib import admin
+
+admin.site.site_header = "Nihongo SRS · administracja"
+admin.site.site_title = "Nihongo SRS"
+admin.site.index_title = "Panel administracyjny"
 from django.templatetags.static import static
 from django.urls import include, path
 from django.views.generic import RedirectView
