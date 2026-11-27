@@ -2,7 +2,7 @@
 
 # Nihongo SRS
 
-Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek rozłożonych w czasie** (SRS, *spaced repetition system*). Użytkownik uczy się kart z sylabariuszami kana, słownictwem i kanji na poziomach JLPT N5–N4, ocenia, jak dobrze pamiętał odpowiedź, a algorytm SM-2 sam planuje kolejną powtórkę, osobno dla każdego użytkownika i każdej karty.
+Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek rozłożonych w czasie** (SRS, *spaced repetition system*). Użytkownik uczy się kart z sylabariuszami kana, słownictwem i kanji na poziomach JLPT N5–N1 oraz z rozmówkami i słownictwem tematycznym, ocenia, jak dobrze pamiętał odpowiedź, a algorytm SM-2 sam planuje kolejną powtórkę, osobno dla każdego użytkownika i każdej karty.
 
 > Projekt zaliczeniowy z przedmiotu *Aplikacje internetowe w Django* (mgr inż. Marek Foryś), WSB Merito Chorzów, Informatyka II stopnia, specjalność Programista Python.
 > Autor: Cezary Kalinowski
@@ -38,7 +38,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Moduł | Funkcje |
 |---|---|
 | **Konta** | rejestracja, logowanie (login bez rozróżniania wielkości liter), wylogowanie; profil z dziennym limitem nowych kart i celem dziennym |
-| **Talie i karty** | talie systemowe (tylko do odczytu) i własne talie użytkownika; pełny CRUD talii i kart; wyszukiwanie oraz filtry po typie i poziomie JLPT |
+| **Talie i karty** | talie systemowe (tylko do odczytu) i własne talie użytkownika; pełny CRUD talii i kart; wyszukiwanie oraz filtry po typie, poziomie JLPT i kategorii tematycznej |
 | **Nauka** | sesja powtórek: kolejka (zaległe powtórki + nowe karty do dziennego limitu) → przód karty → odsłonięcie odpowiedzi → ocena **Znów / Trudne / Dobre / Łatwe** → wyliczenie następnego terminu |
 | **Kanji** | znaczenie, odczyty on'yomi i kun'yomi, liczba kresek, poziom JLPT, przykładowe słówka |
 | **Statystyki** | wykres powtórek z 30 dni (poprawne / „Znów”), heatmapa aktywności z 20 tygodni, rozkład ocen, nadchodzące powtórki na 7 dni, skuteczność i średni czas odpowiedzi w każdej talii |
@@ -54,6 +54,8 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | **„Jak pisać?”**: animowana kolejność kresek dla kana i kanji (także słówek, znak po znaku): odtwarzanie, pauza, krok po kroku, tempo, numery kresek; w nauce (przycisk lub `K`) i przy każdej karcie w talii | ✅ |
 | **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach z kanji odczyt, a przy słówkach zapisanych samą kaną całe słowo (karta pokazuje wtedy znaczenie); konwersja romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana, znak wydłużenia ー: `koohii` = コーヒー), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
 | **udostępnianie talii**: własną talię można oznaczyć jako udostępnioną; inni widzą ją z nazwą autora (filtr „Udostępnione przez innych”), przeglądają, pobierają CSV i kopiują do siebie (`POST /talie/<id>/kopiuj/`, w API `POST /api/decks/{id}/copy/`); kopia jest prywatna i niezależna od oryginału, postęp nauki liczy się na kopii; tak samo można skopiować talię systemową | ✅ |
+| **JLPT N3–N1**: kanji i słownictwo wyższych poziomów (ok. 9 tys. kart) z polskimi znaczeniami; słowo z kilku list jest uczone na najniższym poziomie, nowe karty przychodzą poziomami (N1 dopiero po N5–N2) | ✅ |
+| **rozmówki i słownictwo tematyczne**: nowy typ talii „Rozmówki” (12 talii zdań na co dzień: restauracja, zakupy, transport, hotel, lekarz, nagłe wypadki…) i 12 talii słownictwa tematycznego (jedzenie, rodzina, ciało, czas, pogoda, zwierzęta…); pole „Kategoria” z filtrem na liście talii; w trybie wpisywania zdanie wpisuje się w całości, bez znaczenia mają spacje i interpunkcja | ✅ |
 | **reset hasła e-mailem** (link ważny 2 godziny, jednorazowy; ten sam komunikat dla nieznanego adresu) i **zmiana hasła** w profilu; lokalnie e-maile w konsoli, na serwerze przez Gmail SMTP | ✅ |
 
 ### Materiał na start
@@ -66,8 +68,12 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Kanji N4 | 166 znaków, jw. |
 | Słownictwo N5 | 709 słów, znaczenia po polsku (+ angielskie) |
 | Słownictwo N4 | 666 słów, znaczenia po polsku (+ angielskie) |
+| Kanji N3 / N2 / N1 | 367 / 367 / 1232 znaki, jw. |
+| Słownictwo N3 / N2 / N1 | 2077 / 1785 / 2655 słów (bez słów z niższych poziomów), znaczenia po polsku (+ angielskie) |
+| Rozmówki | 12 talii, 293 zdania z odczytem i tłumaczeniem |
+| Słownictwo tematyczne | 12 talii, 396 słów |
 
-Razem: 10 talii systemowych, 1828 kart.
+Razem: 40 talii systemowych, 11 000 kart.
 
 ---
 
@@ -118,7 +124,7 @@ Django_projects/
     │   ├── sources.py          # adaptery źródeł kart (Adapter)
     │   ├── factories.py        # tworzenie kart wg typu talii (Metoda wytwórcza)
     │   ├── services.py         # import i eksport CSV
-    │   ├── data/               # kana.py, kanji i słownictwo N5–N4, tłumaczenia, SOURCES.md
+    │   ├── data/               # kana.py, kanji i słownictwo N5–N1, tłumaczenia, rozmówki, tematy, SOURCES.md
     │   └── management/commands/load_data.py
     ├── stats/                  # statystyki: services.py, widok, szablon
     ├── study/
@@ -171,10 +177,11 @@ Logika znajduje się w module `study/srs.py` jako czyste funkcje, więc da się 
 | Źródło | Wykorzystanie | Licencja |
 |---|---|---|
 | Kana | generowane w kodzie (`decks/data/kana.py`) | – |
-| [davidluzgouveia/kanji-data](https://github.com/davidluzgouveia/kanji-data), na podstawie KANJIDIC (EDRDG) i list JLPT Jonathana Wallera | kanji N5–N4: znaczenia, odczyty, liczba kresek, poziom | MIT; KANJIDIC: CC BY-SA 4.0 |
-| [jamsinclair/open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks), na podstawie list Jonathana Wallera | słownictwo N5–N4 | MIT |
+| [davidluzgouveia/kanji-data](https://github.com/davidluzgouveia/kanji-data), na podstawie KANJIDIC (EDRDG) i list JLPT Jonathana Wallera | kanji N5–N1: znaczenia, odczyty, liczba kresek, poziom | MIT; KANJIDIC: CC BY-SA 4.0 |
+| [jamsinclair/open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks), na podstawie list Jonathana Wallera | słownictwo N5–N1 | MIT |
 | [KanjiVG](https://kanjivg.tagaini.net/) (Ulrich Apel) | kolejność kresek kana i kanji (`static/strokes/`, generowane skryptem `decks/data/build_strokes.py`) | CC BY-SA 3.0 |
-| Tłumaczenia na polski | 245 kanji oraz 709 słówek N5 i 666 słówek N4, przygotowane na potrzeby projektu | MIT |
+| Tłumaczenia na polski | wszystkie kanji (2211) i słówka N5–N1, przygotowane na potrzeby projektu | MIT |
+| Rozmówki i słownictwo tematyczne | zdania i słowa napisane na potrzeby projektu (`decks/data/phrasebook.py`, `themes.py`) | MIT |
 
 Pliki źródłowe leżą w `decks/data/`, a szczegóły opisuje `decks/data/SOURCES.md`. Atrybucja jest wyświetlana w stopce aplikacji.
 
@@ -209,7 +216,7 @@ Propozycja palety (do zatwierdzenia):
 | **Metoda szablonowa** (Template Method) | widoki klasowe (`CreateView`, `UpdateView`, `DeleteView`) | szkielet obsługi żądania jest w klasie bazowej Django, a widoki nadpisują tylko wybrane kroki (`get_queryset`, `form_valid`, `get_success_url`) |
 | **Domieszki** (Mixins) | `decks/mixins.py`, `LoginRequiredMixin` | wielokrotnego użytku reguły dostępu: edytować można tylko własne talie i karty |
 | **Adapter** | `decks/sources.py`: `CsvCardSource`, `KanjiDataSource`, `JlptVocabSource` → wspólny interfejs `CardSource` zwracający `CardData` | trzy różne formaty (plik użytkownika, JSON z KANJIDIC, listy JLPT) trafiają do jednej funkcji importu; nowy format to jedna nowa klasa |
-| **Metoda wytwórcza** (Factory Method) | `decks/factories.py`: `CardFactory.for_deck()` → `KanaCardFactory`, `VocabularyCardFactory`, `KanjiCardFactory` | każdy typ talii ma własne reguły pól i walidacji (np. karta kanji to dokładnie jeden znak); import nie musi sprawdzać typu talii |
+| **Metoda wytwórcza** (Factory Method) | `decks/factories.py`: `CardFactory.for_deck()` → `KanaCardFactory`, `VocabularyCardFactory`, `KanjiCardFactory`, `PhraseCardFactory` | każdy typ talii ma własne reguły pól i walidacji (np. karta kanji to dokładnie jeden znak); import nie musi sprawdzać typu talii |
 
 ---
 
@@ -258,7 +265,7 @@ py -m venv .venv
 python -m pip install -r nihongo_srs\requirements.txt
 cd nihongo_srs
 python manage.py migrate
-python manage.py load_data            # 10 talii systemowych: kana, kanji i słownictwo N5–N4
+python manage.py load_data            # 40 talii systemowych: kana, kanji i słownictwo N5–N1, rozmówki, tematy
 python manage.py createsuperuser
 python manage.py runserver
 ```
@@ -280,8 +287,8 @@ Obecnie **103 testy** (ok. 3 s). Testy uruchamia własny runner `config/test_run
 
 | Plik | Zakres |
 |---|---|
-| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, losowa kolejność kart w grupach i losowy wybór nowych słówek, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
-| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry; udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
+| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, losowa kolejność kart w grupach i losowy wybór nowych słówek, nowe karty poziomami N5 → N1, wpisywanie zdań z rozmówek, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
+| `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa, pomijanie słów z niższych poziomów, rozmówki i talie tematyczne), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry (także po kategorii); udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
 | `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu, reset hasła e-mailem (cały przepływ, nieznany adres, jednorazowy link), zmiana hasła |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
 | `api/tests.py` | uwierzytelnienie i JWT (także bez rozróżniania wielkości liter), rejestracja, uprawnienia do talii, CRUD, kolejka i ocena, import i eksport CSV, udostępnione talie i kopia przez API, statystyki, Swagger (także grupowanie endpointów logowania w sekcji Auth) |
