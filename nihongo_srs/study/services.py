@@ -4,6 +4,7 @@ Both the HTML views and the REST API call these functions, so the business
 rules - queue building, daily limits, saving an answer - live in one place.
 """
 
+import random
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -59,13 +60,36 @@ def new_cards(user, deck=None):
     )
 
 
-def build_queue(user, deck=None, now=None, limit=None):
-    """Due reviews first, then new cards up to the daily limit."""
+def pick_new_cards(user, deck=None, limit=0):
+    """Choose today's new cards.
+
+    Kana keeps the table order (a whole row is learned together), but vocabulary and
+    kanji are picked at random - their source lists are sorted alphabetically, which
+    made the next card easy to guess.
+    """
+    if limit <= 0:
+        return []
+    candidates = new_cards(user, deck)
+    picked = list(candidates.filter(deck__kind=Deck.Kind.KANA)[:limit])
+    if len(picked) < limit:
+        others = candidates.exclude(deck__kind=Deck.Kind.KANA).order_by("?")
+        picked += list(others[: limit - len(picked)])
+    return picked
+
+
+def build_queue(user, deck=None, now=None, limit=None, rng=None):
+    """Due reviews first, then new cards up to the daily limit - each group in random order.
+
+    Spaced repetition decides WHICH cards are studied today; the ORDER inside a group is
+    shuffled so the learner cannot predict the next card from the table or the alphabet.
+    """
     now = now or timezone.now()
-    queue = list(due_cards(user, deck, now))
-    new_limit = new_cards_left_today(user, now)
-    if new_limit:
-        queue += list(new_cards(user, deck)[:new_limit])
+    rng = rng or random.Random()
+    due = list(due_cards(user, deck, now))
+    rng.shuffle(due)
+    new = pick_new_cards(user, deck, new_cards_left_today(user, now))
+    rng.shuffle(new)
+    queue = due + new
     return queue[:limit] if limit else queue
 
 

@@ -1,3 +1,4 @@
+import random
 """Tests of the scheduling algorithms and the study service layer."""
 
 from datetime import timedelta
@@ -94,11 +95,39 @@ class StudyServiceTests(TestCase):
         services.submit_review(self.user, self.cards[0], Rating.GOOD)
         self.assertEqual(services.new_cards_left_today(self.user), 2)
         # card 0 is due tomorrow, so only 2 new cards are offered now
-        self.assertEqual([c.front for c in services.build_queue(self.user)], ["k1", "k2"])
+        self.assertCountEqual([c.front for c in services.build_queue(self.user)], ["k1", "k2"])
 
     def test_backdated_review_does_not_use_todays_limit(self):
         services.submit_review(self.user, self.cards[0], Rating.GOOD, now=timezone.now() - timedelta(days=3))
         self.assertEqual(services.new_cards_left_today(self.user), 3)
+
+    def test_kana_new_cards_follow_the_table_but_are_shown_shuffled(self):
+        """Today's kana are the next cards of the table, but their order is random."""
+        orders = set()
+        for seed in range(20):
+            queue = services.build_queue(self.user, rng=random.Random(seed))
+            self.assertCountEqual([c.front for c in queue], ["k0", "k1", "k2"])
+            orders.add(tuple(c.front for c in queue))
+        self.assertGreater(len(orders), 1)
+
+    def test_vocabulary_new_cards_are_picked_at_random(self):
+        vocab = Deck.objects.create(name="Słówka test", kind=Deck.Kind.VOCABULARY, order=2)
+        for i in range(30):
+            Card.objects.create(deck=vocab, front=f"w{i:02}", back="x", order=i)
+        picks = {
+            frozenset(c.front for c in services.build_queue(self.user, deck=vocab)) for _ in range(10)
+        }
+        self.assertGreater(len(picks), 1)  # not always the first three of the alphabet
+
+    def test_due_cards_are_shuffled_too(self):
+        now = timezone.now()
+        for card in self.cards:
+            services.submit_review(self.user, card, Rating.GOOD, now=now - timedelta(days=3))
+        orders = {
+            tuple(c.front for c in services.build_queue(self.user, now=now, rng=random.Random(seed)))
+            for seed in range(20)
+        }
+        self.assertGreater(len(orders), 1)
 
     def test_due_cards_come_before_new_cards(self):
         now = timezone.now()
@@ -193,9 +222,32 @@ class TypingModeTests(TestCase):
         self.assertEqual(task.answers, ["きゅう", "く"])
         self.assertTrue(task.kana_input)
 
-    def test_kanji_and_kana_only_words_are_revealed(self):
+    def test_kanji_are_revealed(self):
         self.assertIsNone(typing_task(Card.objects.create(deck=self.kanji, front="日", back="dzień")))
-        self.assertIsNone(typing_task(Card.objects.create(deck=self.vocab, front="いい", back="dobry")))
+
+    def test_kana_only_word_is_asked_from_the_meaning(self):
+        task = typing_task(Card.objects.create(deck=self.vocab, front="いい", back="dobry"))
+        self.assertEqual(task.answers, ["いい"])
+        self.assertTrue(task.reverse and task.kana_input)
+        katakana = typing_task(Card.objects.create(deck=self.vocab, front="アパート", back="mieszkanie"))
+        self.assertEqual(katakana.answers, ["アパート"])
+
+    def test_every_vocabulary_card_can_be_typed(self):
+        for front, reading in (("猫", "ねこ"), ("あそこ", ""), ("コーヒー", ""), ("～さん", "")):
+            card = Card.objects.create(deck=self.vocab, front=front, back="x", reading=reading)
+            self.assertIsNotNone(typing_task(card), front)
+
+    def test_reverse_card_hides_the_word_until_checked(self):
+        user = User.objects.create_user("ola", password="Haslo-12345")
+        user.profile.answer_mode = "type"
+        user.profile.save()
+        Card.objects.create(deck=self.vocab, front="あそこ", back="tam (daleko)")
+        self.client.login(username="ola", password="Haslo-12345")
+        page = self.client.get(reverse("study_deck", args=[self.vocab.pk])).content.decode()
+        question, answer = page.split('id="answer"')
+        self.assertIn("tam (daleko)", question)
+        self.assertNotIn("あそこ", question.split('id="typing-answers"')[0].split("<main")[-1])
+        self.assertIn("あそこ", answer)
 
     def test_session_page_and_mode_toggle(self):
         user = User.objects.create_user("ania", password="Haslo-12345")
