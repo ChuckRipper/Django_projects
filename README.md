@@ -52,7 +52,7 @@ Aplikacja webowa w Django do nauki języka japońskiego metodą **powtórek roz�
 | Rozszerzenie | Stan |
 |---|---|
 | **„Jak pisać?”**: animowana kolejność kresek dla kana i kanji (także słówek, znak po znaku): odtwarzanie, pauza, krok po kroku, tempo, numery kresek; w nauce (przycisk lub `K`) i przy każdej karcie w talii | ✅ |
-| **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach odczyt z konwersją romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
+| **tryb „wpisz odpowiedź”**: przy kana zapis w romaji, przy słówkach z kanji odczyt, a przy słówkach zapisanych samą kaną całe słowo (karta pokazuje wtedy znaczenie); konwersja romaji → kana w trakcie pisania (WanaKana); porównanie odporne na warianty zapisu (shi/si, hiragana/katakana, znak wydłużenia ー: `koohii` = コーヒー), sugerowana ocena; przełącznik nad kartą (`W`) i w profilu | ✅ |
 | **udostępnianie talii**: własną talię można oznaczyć jako udostępnioną; inni widzą ją z nazwą autora (filtr „Udostępnione przez innych”), przeglądają, pobierają CSV i kopiują do siebie (`POST /talie/<id>/kopiuj/`, w API `POST /api/decks/{id}/copy/`); kopia jest prywatna i niezależna od oryginału, postęp nauki liczy się na kopii; tak samo można skopiować talię systemową | ✅ |
 | **reset hasła e-mailem** (link ważny 2 godziny, jednorazowy; ten sam komunikat dla nieznanego adresu) i **zmiana hasła** w profilu; lokalnie e-maile w konsoli, na serwerze przez Gmail SMTP | ✅ |
 
@@ -158,7 +158,7 @@ Wariant algorytmu SuperMemo SM-2 z czterema ocenami:
 | **Łatwe** | 3 dni | 8 dni | interwał × `ease` × 1,3 | +0,15 |
 
 - Początkowy `ease` = 2,5, minimalny = 1,3; poprawna odpowiedź nigdy nie daje interwału krótszego niż 1 dzień.
-- Kolejka: najpierw zaległe powtórki (`due_at ≤ teraz`), potem nowe karty do dziennego limitu z profilu.
+- Kolejka: najpierw zaległe powtórki (`due_at ≤ teraz`), potem nowe karty do dziennego limitu z profilu. Kolejność w obu grupach jest losowa, a nowe słówka i kanji są wybierane losowo z całej talii (kana zostaje przy nauce wierszami tabeli), więc następnej karty nie da się przewidzieć.
 - Karta jest uznawana za opanowaną przy interwale ≥ 21 dni.
 - Alternatywnie dostępny jest system pudełek Leitnera (`SRS_ALGORITHM = "leitner"` w `settings.py`).
 
@@ -276,11 +276,11 @@ cd nihongo_srs
 python manage.py test
 ```
 
-Obecnie **97 testów** (ok. 3 s). Testy uruchamia własny runner `config/test_runner.py`: wycisza logi błędów, które testy wywołują celowo (400, 403, 404, CSRF…), i używa szybkiego hashowania haseł (tylko w testach).
+Obecnie **103 testy** (ok. 3 s). Testy uruchamia własny runner `config/test_runner.py`: wycisza logi błędów, które testy wywołują celowo (400, 403, 404, CSRF…), i używa szybkiego hashowania haseł (tylko w testach).
 
 | Plik | Zakres |
 |---|---|
-| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
+| `study/tests.py` | algorytm SM-2 (wszystkie oceny, granice `ease`, kolejne interwały), Leitner, wybór strategii; kolejka i dzienny limit (także przy powtórkach z datą wsteczną), kolejność zaległe → nowe, losowa kolejność kart w grupach i losowy wybór nowych słówek, powrót karty po „Znów”, zapis stanu i historii, konfigurowalny algorytm, izolacja cudzych talii, seria dni i skuteczność, postęp talii; widok sesji nauki |
 | `decks/tests.py` | `load_data` (liczby talii i kart, idempotentność, treść kart kanji, czyszczenie słownictwa), adapter CSV (polskie nagłówki, BOM, błędne wiersze z poprawnymi numerami), polskie znaczenia N4, dane kolejności kresek dla wszystkich znaków talii systemowych (zgodność liczby kresek KanjiVG z KANJIDIC), fabryki kart, import z aktualizacją, eksport ↔ import, widoki importu i eksportu, uprawnienia, unikalne nazwy, filtry; udostępnianie: widoczność, tylko odczyt, kopia niezależna od oryginału, nazwy kopii |
 | `accounts/tests.py` | rejestracja, profil, strony publiczne, „O aplikacji”, favicon, logowanie bez rozróżniania wielkości liter, blokada loginów różniących się tylko wielkością liter, walidacja limitów w profilu, reset hasła e-mailem (cały przepływ, nieznany adres, jednorazowy link), zmiana hasła |
 | `stats/tests.py` | powtórki dziennie, poziomy heatmapy, rozkład ocen, etapy kart, skuteczność i czas w taliach, nadchodzące powtórki, strona statystyk (z danymi i bez) |
