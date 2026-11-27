@@ -35,9 +35,25 @@
     // --- Typed-answer mode ----------------------------------------------------
     // Both sides go through WanaKana's toHiragana, so "shi"/"si", ん/"n" and
     // katakana/hiragana count as the same answer.
+    // The long-vowel mark ー is replaced by the vowel it stretches BEFORE the
+    // conversion to hiragana (アパート -> アパアト -> あぱあと), so "apaato",
+    // "apa-to" and "koohii" are accepted, while とおい and とうい stay different.
+    function expandLongVowels(kana) {
+      let out = "";
+      for (const ch of kana) {
+        if (ch === "ー" && out && window.wanakana) {
+          const vowel = wanakana.toRomaji(out.slice(-1)).slice(-1);
+          out += "aiueo".includes(vowel) ? wanakana.toHiragana(vowel) : ch;  // after ん: keep ー
+        } else {
+          out += ch;
+        }
+      }
+      return out;
+    }
+
     function normalize(text) {
       const cleaned = text.trim().toLowerCase().replace(/\s+/g, "");
-      return window.wanakana ? wanakana.toHiragana(cleaned) : cleaned;
+      return window.wanakana ? wanakana.toHiragana(expandLongVowels(cleaned)) : cleaned;
     }
 
     function suggest(value) {
