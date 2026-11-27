@@ -51,8 +51,9 @@
       return out;
     }
 
+    // Spaces and punctuation do not count, so a phrase can be typed with or without 「、。？」.
     function normalize(text) {
-      const cleaned = text.trim().toLowerCase().replace(/\s+/g, "");
+      const cleaned = text.trim().toLowerCase().replace(/[\s、。，．,.!?！？「」『』・～〜]+/g, "");
       return window.wanakana ? wanakana.toHiragana(expandLongVowels(cleaned)) : cleaned;
     }
 

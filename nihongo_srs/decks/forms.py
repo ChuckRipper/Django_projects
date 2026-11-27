@@ -6,7 +6,7 @@ from .models import Card, Deck
 class DeckForm(forms.ModelForm):
     class Meta:
         model = Deck
-        fields = ("name", "description", "kind", "jlpt_level", "is_public")
+        fields = ("name", "description", "kind", "jlpt_level", "category", "is_public")
         labels = {"is_public": "Udostępnij talię innym użytkownikom"}
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 

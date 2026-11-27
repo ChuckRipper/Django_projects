@@ -6,7 +6,7 @@
   <a href="{% url 'deck_create' %}" class="btn btn-accent" data-shortcut="n" data-shortcut-label="nowa talia"><i class="bi bi-plus-lg"></i> Nowa talia</a>
 </div>
 <form class="row g-2 mb-4" method="get">
-  <div class="col-md-4"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Szukaj talii" data-shortcut="f" data-shortcut-label="szukaj talii"></div>
+  <div class="col-md-3"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Szukaj talii" data-shortcut="f" data-shortcut-label="szukaj talii"></div>
   <div class="col-md-2">
     <select class="form-select" name="source" aria-label="Źródło talii">
       <option value="">Wszystkie talie</option>
@@ -25,7 +25,13 @@
       {% for value, label in levels %}<option value="{{ value }}" {% if value == level %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-md-2 d-grid"><button class="btn btn-outline-primary"><i class="bi bi-funnel"></i> Filtruj</button></div>
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="category" aria-label="Kategoria">
+      <option value="">Każda kategoria</option>
+      {% for value, label in categories %}<option value="{{ value }}" {% if value == category %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-1 d-grid"><button class="btn btn-outline-primary" title="Filtruj"><i class="bi bi-funnel"></i><span class="d-md-none d-xl-inline"> Filtruj</span></button></div>
 </form>
 <div class="row g-3">
   {% for deck in decks %}
@@ -38,7 +44,7 @@
           {% elif deck.owner_id == user.id %}<span class="badge text-bg-info">własna{% if deck.is_public %} · <i class="bi bi-people-fill" title="udostępniona"></i>{% endif %}</span>
           {% else %}<span class="badge text-bg-warning" title="Talia udostępniona przez innego użytkownika">od: {{ deck.owner.username }}</span>{% endif %}
         </div>
-        <p class="small text-body-secondary mb-2">{{ deck.get_kind_display }}{% if deck.jlpt_level %} · {{ deck.jlpt_level }}{% endif %} · {{ deck.card_count }} kart</p>
+        <p class="small text-body-secondary mb-2">{{ deck.get_kind_display }}{% if deck.jlpt_level %} · {{ deck.jlpt_level }}{% endif %}{% if deck.category %} · {{ deck.get_category_display }}{% endif %} · {{ deck.card_count }} kart</p>
         <div class="progress mb-2" style="height: 6px" title="Rozpoczęte: {{ deck.started_count }} z {{ deck.card_count }}">
           <div class="progress-bar" style="width: {% widthratio deck.started_count deck.card_count|default:1 100 %}%"></div>
         </div>

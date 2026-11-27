@@ -7,7 +7,9 @@ Every kana and vocabulary card can be typed:
   * kana                  -> type the romaji,
   * word with kanji       -> type its reading,
   * word written in kana  -> the card is shown from the other side: the meaning is the
-                             question and the learner types the word (romaji turns into kana).
+                             question and the learner types the word (romaji turns into kana),
+  * phrasebook sentence   -> type its whole reading (spaces and punctuation are ignored);
+                             a sentence written only in kana is asked from the Polish side.
 Kanji alone have several on/kun readings, so they stay in reveal mode.
 """
 
@@ -20,6 +22,7 @@ ROMAJI_RE = re.compile(r"[a-z]+")
 READING_SEPARATORS = re.compile(r"[;；、,，/]")
 NOT_KANA_RE = re.compile(r"[^ぁ-ゖァ-ヺー]")
 KANA_ONLY_RE = re.compile(r"^[ぁ-ゖァ-ヺー・～〜]+$")
+KANA_SENTENCE_RE = re.compile(r"^[ぁ-ゖァ-ヺー・～〜、。？！…\s]+$")
 
 
 @dataclass
@@ -37,6 +40,19 @@ def typing_task(card: Card) -> TypingTask | None:
     if kind == Deck.Kind.KANA:
         romaji = ROMAJI_RE.findall(card.back.lower())  # "ji (di)" -> ["ji", "di"]
         return TypingTask("Wpisz zapis w romaji", "np. ka", [card.front, *romaji])
+    if kind == Deck.Kind.PHRASE:
+        # A sentence reading contains 、 and spaces, so it is one answer, not a list of variants.
+        if card.reading and NOT_KANA_RE.sub("", card.reading):
+            return TypingTask(
+                "Wpisz całe zdanie w kanie", "romaji zamieni się w kanę",
+                [NOT_KANA_RE.sub("", card.reading)], kana_input=True,
+            )
+        if KANA_SENTENCE_RE.match(card.front.strip()):
+            return TypingTask(
+                "Powiedz to po japońsku – wpisz zdanie", "romaji zamieni się w kanę",
+                [NOT_KANA_RE.sub("", card.front)], kana_input=True, reverse=True,
+            )
+        return None
     if kind == Deck.Kind.VOCABULARY and card.reading:
         variants = [NOT_KANA_RE.sub("", part) for part in READING_SEPARATORS.split(card.reading)]
         answers = [variant for variant in variants if variant]

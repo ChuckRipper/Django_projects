@@ -6,9 +6,11 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from decks.data.kana import kana_decks
+from decks.data.phrasebook import PHRASE_DECKS
+from decks.data.themes import THEME_DECKS
 from decks.models import Card, Deck
 from decks.services import import_cards
-from decks.sources import KANJI_RE, JlptVocabSource, KanjiDataSource
+from decks.sources import KANJI_RE, CardData, JlptVocabSource, KanjiDataSource
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 KANJI_LEVELS = (("N5", 5), ("N4", 4), ("N3", 3), ("N2", 2), ("N1", 1))
@@ -29,12 +31,18 @@ def kanji_examples(vocab_sources, limit=2):
 
 
 class Command(BaseCommand):
-    help = "Ładuje talie systemowe: kana, kanji i słownictwo JLPT N5–N1. Można uruchamiać wielokrotnie."
+    help = (
+        "Ładuje talie systemowe: kana, kanji i słownictwo JLPT N5–N1, rozmówki i słownictwo tematyczne. "
+        "Można uruchamiać wielokrotnie."
+    )
 
-    def deck(self, name, kind, order, description, level=""):
+    def deck(self, name, kind, order, description, level="", category=""):
         deck, _ = Deck.objects.update_or_create(
             owner=None, name=name,
-            defaults={"kind": kind, "order": order, "description": description, "jlpt_level": level},
+            defaults={
+                "kind": kind, "order": order, "description": description,
+                "jlpt_level": level, "category": category,
+            },
         )
         return deck
 
@@ -89,6 +97,18 @@ class Command(BaseCommand):
                 f"Słownictwo z poziomu JLPT {level}, znaczenia po polsku.", level,
             )
             self.report(deck, import_cards(deck, vocab_sources[level]))
+
+        # Phrasebook and thematic decks: written for this project, no JLPT level.
+        for kind, decks in ((Deck.Kind.PHRASE, PHRASE_DECKS), (Deck.Kind.VOCABULARY, THEME_DECKS)):
+            for name, category, description, entries in decks:
+                order += 1
+                deck = self.deck(name, kind, order, description, category=category)
+                cards = [
+                    # A reading identical to the front adds nothing (kana-only sentence or word).
+                    CardData(front=front, back=back, reading="" if reading == front else reading)
+                    for front, reading, back in entries
+                ]
+                self.report(deck, import_cards(deck, cards))
 
         self.stdout.write(self.style.SUCCESS(
             f"Gotowe: talie systemowe {Deck.objects.filter(owner=None).count()}, "

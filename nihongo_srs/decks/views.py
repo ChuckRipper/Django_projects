@@ -29,6 +29,7 @@ class DeckListView(LoginRequiredMixin, ListView):
         q = self.request.GET.get("q", "").strip()
         kind = self.request.GET.get("kind", "")
         level = self.request.GET.get("level", "")
+        category = self.request.GET.get("category", "")
         source = self.request.GET.get("source", "")
         if source == "system":
             decks = decks.filter(owner__isnull=True)
@@ -42,6 +43,8 @@ class DeckListView(LoginRequiredMixin, ListView):
             decks = decks.filter(kind=kind)
         if level in Deck.JlptLevel.values:
             decks = decks.filter(jlpt_level=level)
+        if category in Deck.Category.values:
+            decks = decks.filter(category=category)
         # One query with aggregates instead of N+1 queries per deck.
         return decks.annotate(
             card_count=Count("cards", distinct=True),
@@ -66,10 +69,12 @@ class DeckListView(LoginRequiredMixin, ListView):
             q=self.request.GET.get("q", ""),
             kind=self.request.GET.get("kind", ""),
             level=self.request.GET.get("level", ""),
+            category=self.request.GET.get("category", ""),
             source=self.request.GET.get("source", ""),
             sources=[("system", "Systemowe"), ("own", "Moje"), ("shared", "Udostępnione przez innych")],
             kinds=Deck.Kind.choices,
             levels=Deck.JlptLevel.choices,
+            categories=Deck.Category.choices,
         )
         return context
 

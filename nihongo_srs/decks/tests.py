@@ -1,4 +1,5 @@
 import json
+import re
 from io import StringIO
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from .sources import CardData, CsvCardSource
 
 # KanjiVG has 9 stroke paths for 衷, while KANJIDIC gives 10 strokes.
 KANJIVG_STROKE_COUNT_DIFFERS = {"衷"}
+JAPANESE_CHAR_RE = re.compile(r"[ぁ-ゖァ-ヺー一-龯々]")
 
 
 class LoadDataTests(TestCase):
@@ -24,7 +26,7 @@ class LoadDataTests(TestCase):
         counts = {deck.name: deck.cards.count() for deck in Deck.objects.filter(owner=None)}
         call_command("load_data", stdout=StringIO())
         self.assertEqual({d.name: d.cards.count() for d in Deck.objects.filter(owner=None)}, counts)
-        self.assertEqual(len(counts), 16)
+        self.assertEqual(len(counts), 16 + 12 + 12)  # kana/kanji/JLPT, phrasebook, thematic
         self.assertEqual(Card.objects.filter(deck__kind=Deck.Kind.KANA).count(), 2 * (46 + 25 + 33))
         self.assertEqual(counts["Kanji N5"], 79)
         self.assertEqual(counts["Kanji N4"], 166)
@@ -33,6 +35,24 @@ class LoadDataTests(TestCase):
         self.assertEqual((counts["Kanji N3"], counts["Kanji N2"], counts["Kanji N1"]), (367, 367, 1232))
         for level in ("N3", "N2", "N1"):
             self.assertGreater(counts[f"Słownictwo {level}"], 1500)
+
+    def test_phrasebook_and_thematic_decks(self):
+        call_command("load_data", stdout=StringIO())
+        phrases = Deck.objects.filter(owner=None, kind=Deck.Kind.PHRASE)
+        self.assertEqual(phrases.count(), 12)
+        self.assertFalse(phrases.filter(category="").exists())
+        restaurant = phrases.get(name="Rozmówki – W restauracji")
+        self.assertEqual(restaurant.category, Deck.Category.FOOD)
+        bill = restaurant.cards.get(front="お会計をお願いします")
+        self.assertEqual((bill.reading, bill.back), ("おかいけいをおねがいします", "poproszę rachunek"))
+        self.assertEqual(restaurant.cards.get(front="二人です").reading, "ふたりです")
+        greetings = phrases.get(category=Deck.Category.BASICS, name__contains="Powitania")
+        self.assertEqual(greetings.cards.get(front="こんにちは").reading, "")  # kana-only: no duplicate reading
+        themes = Deck.objects.filter(owner=None, kind=Deck.Kind.VOCABULARY, jlpt_level="").exclude(category="")
+        self.assertEqual(themes.count(), 12)
+        self.assertEqual(themes.get(category=Deck.Category.ANIMALS).cards.get(front="猫").back, "kot")
+        for deck in list(phrases) + list(themes):
+            self.assertGreaterEqual(deck.cards.count(), 20, deck.name)
 
     def test_kanji_card_content(self):
         call_command("load_data", stdout=StringIO())
@@ -46,7 +66,7 @@ class LoadDataTests(TestCase):
         call_command("load_data", stdout=StringIO())
         strokes_dir = settings.BASE_DIR / "static" / "strokes"
         fronts = "".join(Card.objects.filter(deck__owner=None).values_list("front", flat=True))
-        chars = {c for c in fronts if not c.isascii()} - {"～", "〜", "×"}
+        chars = {c for c in fronts if JAPANESE_CHAR_RE.match(c)}  # kana and kanji, no punctuation
         missing = [c for c in chars if not (strokes_dir / f"{ord(c):05x}.json").exists()]
         self.assertEqual(missing, [])
         for card in Card.objects.filter(deck__kind=Deck.Kind.KANJI):  # KanjiVG agrees with KANJIDIC
@@ -113,6 +133,15 @@ class DeckPermissionTests(TestCase):
         response = self.client.post(reverse("deck_create"), {"name": "moja", "kind": "vocabulary"})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors["name"])
+
+    def test_filter_by_category(self):
+        Deck.objects.create(name="Rozmówki – Hotel", kind=Deck.Kind.PHRASE, category=Deck.Category.HOTEL)
+        Deck.objects.create(name="Tematy – Dom", category=Deck.Category.HOME)
+        response = self.client.get(reverse("deck_list"), {"category": "hotel"})
+        self.assertEqual([d.name for d in response.context["decks"]], ["Rozmówki – Hotel"])
+        self.assertContains(response, "Hotel i nocleg")
+        both = self.client.get(reverse("deck_list"), {"kind": "phrase", "category": "home"})
+        self.assertEqual(list(both.context["decks"]), [])
 
     def test_filter_by_kind(self):
         Deck.objects.create(name="Kanji N5", kind=Deck.Kind.KANJI)

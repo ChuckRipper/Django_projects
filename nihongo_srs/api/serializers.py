@@ -14,7 +14,7 @@ class DeckSerializer(serializers.ModelSerializer):
     class Meta:
         model = Deck
         fields = (
-            "id", "name", "description", "kind", "jlpt_level", "is_system", "is_public", "owner",
+            "id", "name", "description", "kind", "jlpt_level", "category", "is_system", "is_public", "owner",
             "copied_from", "card_count", "created_at",
         )
         read_only_fields = ("id", "copied_from", "created_at")

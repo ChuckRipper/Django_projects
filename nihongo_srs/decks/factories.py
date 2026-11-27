@@ -23,6 +23,7 @@ class CardFactory(ABC):
             Deck.Kind.KANA: KanaCardFactory,
             Deck.Kind.VOCABULARY: VocabularyCardFactory,
             Deck.Kind.KANJI: KanjiCardFactory,
+            Deck.Kind.PHRASE: PhraseCardFactory,
         }
         return factories[deck.kind](deck)
 
@@ -66,3 +67,7 @@ class KanjiCardFactory(CardFactory):
             "example": data.example[:255], "onyomi": data.onyomi[:100], "kunyomi": data.kunyomi[:100],
             "stroke_count": data.stroke_count, "meaning_en": data.meaning_en[:255],
         }
+
+
+class PhraseCardFactory(VocabularyCardFactory):
+    """Phrasebook entries: a whole sentence on the front, its reading in kana and the Polish meaning."""

@@ -24,6 +24,25 @@ class Deck(models.Model):
         KANA = "kana", "Kana"
         VOCABULARY = "vocabulary", "Słownictwo"
         KANJI = "kanji", "Kanji"
+        PHRASE = "phrase", "Rozmówki"
+
+    class Category(models.TextChoices):
+        """Topic of a deck - used by phrasebook and thematic vocabulary decks."""
+        BASICS = "basics", "Podstawy i grzeczności"
+        PEOPLE = "people", "Ludzie i rodzina"
+        BODY = "body", "Ciało i zdrowie"
+        FOOD = "food", "Jedzenie i picie"
+        SHOPPING = "shopping", "Zakupy i pieniądze"
+        TRAVEL = "travel", "Podróże i transport"
+        HOTEL = "hotel", "Hotel i nocleg"
+        CITY = "city", "Miasto i kierunki"
+        HOME = "home", "Dom"
+        TIME = "time", "Czas i kalendarz"
+        NATURE = "nature", "Pogoda i przyroda"
+        ANIMALS = "animals", "Zwierzęta"
+        WORK = "work", "Praca i szkoła"
+        HOBBY = "hobby", "Czas wolny"
+        EMERGENCY = "emergency", "Nagłe wypadki"
 
     class JlptLevel(models.TextChoices):
         N5 = "N5", "N5"
@@ -37,6 +56,10 @@ class Deck(models.Model):
     kind = models.CharField("Typ", max_length=20, choices=Kind.choices, default=Kind.VOCABULARY)
     jlpt_level = models.CharField(
         "Poziom JLPT", max_length=2, choices=JlptLevel.choices, blank=True
+    )
+    category = models.CharField(
+        "Kategoria", max_length=20, choices=Category.choices, blank=True,
+        help_text="Temat talii (rozmówki, słownictwo tematyczne).",
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True,

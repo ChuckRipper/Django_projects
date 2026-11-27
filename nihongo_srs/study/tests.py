@@ -222,6 +222,20 @@ class TypingModeTests(TestCase):
         self.assertEqual(task.answers, ["きゅう", "く"])
         self.assertTrue(task.kana_input)
 
+    def test_phrase_is_typed_as_one_whole_reading(self):
+        phrases = Deck.objects.create(name="Rozmówki", kind=Deck.Kind.PHRASE)
+        card = Card.objects.create(
+            deck=phrases, front="では、また明日", back="do jutra", reading="では、また あした",
+        )
+        task = typing_task(card)
+        self.assertEqual(task.answers, ["ではまたあした"])  # not split on 、
+        self.assertTrue(task.kana_input)
+        self.assertFalse(task.reverse)
+        kana_only = typing_task(Card.objects.create(deck=phrases, front="おはようございます", back="dzień dobry"))
+        self.assertEqual(kana_only.answers, ["おはようございます"])
+        self.assertTrue(kana_only.reverse)
+        self.assertIsNone(typing_task(Card.objects.create(deck=phrases, front="OK!", back="ok")))
+
     def test_kanji_are_revealed(self):
         self.assertIsNone(typing_task(Card.objects.create(deck=self.kanji, front="日", back="dzień")))
 
