@@ -267,3 +267,30 @@ class TypingModeTests(TestCase):
 
         unsafe = self.client.post(reverse("answer_mode_toggle"), {"next": "https://example.com/"})
         self.assertRedirects(unsafe, reverse("study"), fetch_redirect_response=False)
+
+
+class NewCardLevelOrderTests(TestCase):
+    """Studying all decks: new cards come level by level (N5 before N4 before N1...)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("ewa", password="Haslo-12345")
+        self.user.profile.new_cards_per_day = 4
+        self.user.profile.save()
+        self.decks = {}
+        for order, level in enumerate(("N1", "N5", "N4"), start=1):
+            deck = Deck.objects.create(name=f"Słownictwo {level}", kind=Deck.Kind.VOCABULARY,
+                                       jlpt_level=level, order=order)
+            for i in range(3):
+                Card.objects.create(deck=deck, front=f"{level}-{i}", back="x", order=i)
+            self.decks[level] = deck
+
+    def test_lower_levels_first(self):
+        queue = services.build_queue(self.user, rng=random.Random(1))
+        levels = sorted(card.deck.jlpt_level for card in queue)
+        self.assertEqual(levels, ["N4", "N5", "N5", "N5"])
+
+    def test_own_decks_come_before_system_levels(self):
+        own = Deck.objects.create(name="Moja", kind=Deck.Kind.VOCABULARY, owner=self.user)
+        Card.objects.create(deck=own, front="moje", back="x")
+        fronts = [card.front for card in services.build_queue(self.user)]
+        self.assertIn("moje", fronts)

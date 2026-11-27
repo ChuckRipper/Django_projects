@@ -60,20 +60,34 @@ def new_cards(user, deck=None):
     )
 
 
+# Order in which new material is introduced when studying "all decks":
+# kana, the user's own decks, then JLPT levels from the easiest, then other system decks.
+LEVEL_ORDER = ("N5", "N4", "N3", "N2", "N1")
+
+
+def _new_card_groups(candidates):
+    yield candidates.filter(deck__owner__isnull=False)
+    for level in LEVEL_ORDER:
+        yield candidates.filter(deck__owner__isnull=True, deck__jlpt_level=level)
+    yield candidates.filter(deck__owner__isnull=True).exclude(deck__jlpt_level__in=LEVEL_ORDER)
+
+
 def pick_new_cards(user, deck=None, limit=0):
     """Choose today's new cards.
 
-    Kana keeps the table order (a whole row is learned together), but vocabulary and
-    kanji are picked at random - their source lists are sorted alphabetically, which
-    made the next card easy to guess.
+    Kana keeps the table order (a whole row is learned together). Other cards are picked
+    at random - their source lists are sorted alphabetically, which made the next card
+    easy to guess - but level by level: N1 words never appear before N5 is finished.
     """
     if limit <= 0:
         return []
     candidates = new_cards(user, deck)
     picked = list(candidates.filter(deck__kind=Deck.Kind.KANA)[:limit])
-    if len(picked) < limit:
-        others = candidates.exclude(deck__kind=Deck.Kind.KANA).order_by("?")
-        picked += list(others[: limit - len(picked)])
+    others = candidates.exclude(deck__kind=Deck.Kind.KANA)
+    for group in _new_card_groups(others):
+        if len(picked) >= limit:
+            break
+        picked += list(group.order_by("?")[: limit - len(picked)])
     return picked
 
 

@@ -199,9 +199,22 @@ class JlptVocabSource(CardSource):
 
     path: Path
     translations_path: Path | None = None
+    exclude: frozenset = frozenset()  # words already taught on a lower level
+    clean_notes: bool = False  # N3-N1 lists: notes in brackets, "(かん)", commas between forms
 
     def __post_init__(self):
         super().__init__()
+
+    NOTE_RE = re.compile(r"\s*[(（]([^)）]*)[)）]\s*")
+
+    @classmethod
+    def _strip_notes(cls, text: str) -> tuple[str, bool]:
+        """Remove bracketed notes: "こす (みずを～)" -> "こす". Returns (text, had a usage note)."""
+        notes = [note for note in cls.NOTE_RE.findall(text) if note.strip() != "かん"]  # かん = interjection
+        cleaned = cls.NOTE_RE.sub(" ", text).replace("〜", "～")
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        cleaned = re.sub(r"(?<=[～\u3040-\u30ff\u4e00-\u9fff]) (?=[～\u3040-\u30ff\u4e00-\u9fff])", "", cleaned)
+        return cleaned, bool(notes)
 
     @staticmethod
     def _clean_reading(reading: str) -> str:
@@ -216,8 +229,21 @@ class JlptVocabSource(CardSource):
                 expression, reading = row["expression"].strip(), row["reading"].strip()
                 meaning_en = row["meaning"].strip()
                 meaning = polish.get((expression, reading)) or meaning_en
-                forms = [form.strip() for form in re.split(r"[;、]", expression) if form.strip()]
+                usage = ""
+                if self.clean_notes:
+                    source_expression = expression
+                    expression, had_note = self._strip_notes(expression)
+                    reading, _ = self._strip_notes(reading)
+                    reading = reading.replace(" ", "")
+                    if had_note:
+                        usage = f"Użycie: {source_expression}"
+                separators = r"[;、,，]" if self.clean_notes else r"[;、]"
+                forms = [form.strip() for form in re.split(separators, expression) if form.strip()]
+                if not forms:
+                    continue
                 front = forms[0]
+                if front in self.exclude:
+                    continue
                 alternatives = "、".join(forms[1:])
                 reading = self._clean_reading(reading)
                 if not KANJI_RE.search(front):
@@ -230,8 +256,9 @@ class JlptVocabSource(CardSource):
                         card.back = f"{card.back} / {meaning}"[:255]
                         card.meaning_en = f"{card.meaning_en} / {meaning_en}"[:255]
                     continue
+                notes = [f"Inny zapis: {alternatives}" if alternatives else "", usage]
                 merged[front] = CardData(
                     front=front, back=meaning[:255], reading=reading, meaning_en=meaning_en[:255],
-                    example=f"Inny zapis: {alternatives}" if alternatives else "",
+                    example=" · ".join(note for note in notes if note)[:255],
                 )
         yield from merged.values()

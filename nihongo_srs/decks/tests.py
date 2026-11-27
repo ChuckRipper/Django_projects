@@ -14,18 +14,25 @@ from .services import export_csv, import_cards
 from .sources import CardData, CsvCardSource
 
 
+# KanjiVG has 9 stroke paths for 衷, while KANJIDIC gives 10 strokes.
+KANJIVG_STROKE_COUNT_DIFFERS = {"衷"}
+
+
 class LoadDataTests(TestCase):
     def test_loads_system_decks_and_is_idempotent(self):
         call_command("load_data", stdout=StringIO())
         counts = {deck.name: deck.cards.count() for deck in Deck.objects.filter(owner=None)}
         call_command("load_data", stdout=StringIO())
         self.assertEqual({d.name: d.cards.count() for d in Deck.objects.filter(owner=None)}, counts)
-        self.assertEqual(len(counts), 10)
+        self.assertEqual(len(counts), 16)
         self.assertEqual(Card.objects.filter(deck__kind=Deck.Kind.KANA).count(), 2 * (46 + 25 + 33))
         self.assertEqual(counts["Kanji N5"], 79)
         self.assertEqual(counts["Kanji N4"], 166)
         self.assertGreater(counts["Słownictwo N5"], 650)
         self.assertGreater(counts["Słownictwo N4"], 600)
+        self.assertEqual((counts["Kanji N3"], counts["Kanji N2"], counts["Kanji N1"]), (367, 367, 1232))
+        for level in ("N3", "N2", "N1"):
+            self.assertGreater(counts[f"Słownictwo {level}"], 1500)
 
     def test_kanji_card_content(self):
         call_command("load_data", stdout=StringIO())
@@ -39,12 +46,13 @@ class LoadDataTests(TestCase):
         call_command("load_data", stdout=StringIO())
         strokes_dir = settings.BASE_DIR / "static" / "strokes"
         fronts = "".join(Card.objects.filter(deck__owner=None).values_list("front", flat=True))
-        chars = {c for c in fronts if not c.isascii()} - {"～"}
+        chars = {c for c in fronts if not c.isascii()} - {"～", "〜", "×"}
         missing = [c for c in chars if not (strokes_dir / f"{ord(c):05x}.json").exists()]
         self.assertEqual(missing, [])
         for card in Card.objects.filter(deck__kind=Deck.Kind.KANJI):  # KanjiVG agrees with KANJIDIC
             data = json.loads((strokes_dir / f"{ord(card.front):05x}.json").read_text(encoding="utf-8"))
-            self.assertEqual(len(data["s"]), card.stroke_count, card.front)
+            if card.front not in KANJIVG_STROKE_COUNT_DIFFERS:
+                self.assertEqual(len(data["s"]), card.stroke_count, card.front)
 
     def test_vocabulary_cleanup(self):
         call_command("load_data", stdout=StringIO())
@@ -57,6 +65,18 @@ class LoadDataTests(TestCase):
         n4 = Deck.objects.get(name="Słownictwo N4")
         self.assertEqual(n4.cards.get(front="地震").back, "trzęsienie ziemi")
         self.assertEqual(n4.cards.get(front="地震").meaning_en, "earthquake")
+
+    def test_higher_levels_skip_words_from_lower_levels_and_clean_notes(self):
+        call_command("load_data", stdout=StringIO())
+        system_vocab = Card.objects.filter(deck__owner=None, deck__kind=Deck.Kind.VOCABULARY)
+        for level in ("N3", "N2", "N1"):
+            fronts = set(system_vocab.filter(deck__jlpt_level=level).values_list("front", flat=True))
+            lower = set(system_vocab.filter(deck__jlpt_level__in=["N5", "N4"]).values_list("front", flat=True))
+            self.assertFalse(fronts & lower, level)
+        n1 = Deck.objects.get(name="Słownictwo N1")
+        kosu = n1.cards.get(front="こす")  # "こす (みずを～)": note moved out of the front
+        self.assertIn("みずを", kosu.example)
+        self.assertFalse(n1.cards.filter(front__contains="(").exists())
 
 
 class DeckPermissionTests(TestCase):
